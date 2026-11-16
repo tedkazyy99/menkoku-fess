@@ -1,0 +1,34 @@
+{
+  "name": "menfess-platform",
+  "version": "1.0.0",
+  "description": "Automated Web Menfess platform to Instagram with moderation and admin dashboard",
+  "main": "api/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/dev-server.ts",
+    "build": "tsc",
+    "start": "node dist/dev-server.js",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "keywords": [
+    "menfess",
+    "instagram",
+    "hono",
+    "turso",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "@libsql/client": "^0.14.0",
+    "@vercel/og": "^0.6.5",
+    "dotenv": "^16.4.7",
+    "hono": "^4.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

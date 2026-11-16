@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard moderator menfess untuk monitoring dan kurasi konten.">
+  <title>Admin Dashboard Menfess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Chivo:wght@400;700;900&family=Silkscreen:wght@700&display=swap" rel="stylesheet">
+  <style>
+/* Hallmark · shape: Workbench · genre: playful · theme: Arcade (deal 3/3, seed retro-menfess-confession-platform-4983·637d30ec·2026-11-16·r0) · job: try · draw: 637d30ec
+ * hero: Stage · nav: edge-aligned · footer: mast · imagery: none · signature: tactile admin moderator table · arcade: ember/grille
+ * axes: dark/pixel/chromatic-ember · posture: full-palette · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, strict tokenized admin surface */
+@import url("/styles/admin.css");
+
+html, body {
+  overflow-x: clip;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+button:active {
+  translate: 2px 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+  </style>
+</head>
+<body class="crt">
+  <main class="admin-layout">
+    <!-- Top Bar -->
+    <header class="admin-header">
+      <div>
+        <h1 class="admin-title">Menfess Moderator</h1>
+        <p class="admin-desc">Pantau feed, kurasi pesan tertahan, dan takedown postingan Instagram.</p>
+      </div>
+
+      <!-- Quota Counter -->
+      <div class="quota-box">
+        <div class="quota-meta">
+          <span class="quota-label">Kuota 24 Jam Meta</span>
+          <span id="quotaText" class="quota-num">-- / 25</span>
+        </div>
+        <div class="quota-bar-track">
+          <div id="quotaBar" class="quota-bar-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Auth Key Input -->
+    <section class="auth-bar" aria-label="Autentikasi Admin">
+      <label for="adminPassword" class="visually-hidden">Password Admin</label>
+      <input
+        type="password"
+        id="adminPassword"
+        placeholder="Masukkan ADMIN_PASSWORD…"
+        class="admin-input"
+      />
+      <button id="savePasswordBtn" class="admin-btn">
+        Simpan Kunci
+      </button>
+      <span id="authStatus" class="quota-label">Kunci tersimpan di browser</span>
+      <div style="margin-left: auto;">
+        <a href="/" class="quota-label" style="text-decoration: underline;">Form Pengirim</a>
+      </div>
+    </section>
+
+    <!-- Filter Tabs -->
+    <nav class="tab-row" aria-label="Filter Status">
+      <button onclick="setFilter('')" class="tab-btn" data-filter="" data-active="true">Semua</button>
+      <button onclick="setFilter('flagged')" class="tab-btn" data-filter="flagged">Karantina</button>
+      <button onclick="setFilter('posted')" class="tab-btn" data-filter="posted">Terbit</button>
+      <button onclick="setFilter('rejected')" class="tab-btn" data-filter="rejected">Ditolak</button>
+    </nav>
+
+    <!-- Menfess List Container -->
+    <div id="listContainer" class="space-y-4">
+      <div class="empty-state">Memuat data menfess…</div>
+    </div>
+  </main>
+
+  <script>
+    let currentFilter = '';
+    const passwordInput = document.getElementById('adminPassword');
+    const authStatus = document.getElementById('authStatus');
+
+    const saved = localStorage.getItem('menfess_admin_pwd') || '';
+    if (saved) passwordInput.value = saved;
+
+    document.getElementById('savePasswordBtn').addEventListener('click', () => {
+      localStorage.setItem('menfess_admin_pwd', passwordInput.value);
+      authStatus.textContent = 'Kunci diperbarui';
+      setTimeout(() => {
+        authStatus.textContent = 'Kunci tersimpan di browser';
+      }, 2000);
+      loadData();
+    });
+
+    function getHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${passwordInput.value || localStorage.getItem('menfess_admin_pwd') || ''}`,
+      };
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.setAttribute('data-active', 'true');
+        } else {
+          btn.removeAttribute('data-active');
+        }
+      });
+      loadData();
+    }
+
+    async function loadData() {
+      const container = document.getElementById('listContainer');
+      try {
+        const url = `/api/admin/menfess?status=${currentFilter}`;
+        const res = await fetch(url, { headers: getHeaders() });
+
+        if (res.status === 401) {
+          container.innerHTML = `
+            <div class="empty-state" style="color: var(--color-error); border-color: var(--color-error);">
+              Password admin belum diisi atau salah. Masukkan password yang sesuai lalu klik Simpan Kunci.
+            </div>
+          `;
+          return;
+        }
+
+        const data = await res.json();
+        renderQuota(data.quotaToday || 0);
+        renderList(data.records || []);
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state">Gagal memuat data. Periksa koneksi backend.</div>`;
+      }
+    }
+
+    function renderQuota(count) {
+      const text = document.getElementById('quotaText');
+      const bar = document.getElementById('quotaBar');
+      text.textContent = `${count} / 25`;
+      const pct = Math.min(100, Math.round((count / 25) * 100));
+      bar.style.transform = `scaleX(${pct / 100})`;
+      if (count >= 25) {
+        bar.style.background = 'var(--color-error)';
+        text.style.color = 'var(--color-error)';
+      } else {
+        bar.style.background = 'var(--color-accent-2)';
+        text.style.color = 'var(--color-accent-2)';
+      }
+    }
+
+    function renderList(records) {
+      const container = document.getElementById('listContainer');
+      if (!records.length) {
+        container.innerHTML = `<div class="empty-state">Tidak ada menfess pada kategori ini.</div>`;
+        return;
+      }
+
+      container.innerHTML = records.map(r => {
+        let badgeMod = 'status-badge--posted';
+        if (r.status === 'flagged') badgeMod = 'status-badge--flagged';
+        if (r.status === 'rejected') badgeMod = 'status-badge--rejected';
+
+        const date = new Date(r.created_at).toLocaleString('id-ID');
+
+        return `
+          <article class="record-card">
+            <div class="record-top">
+              <span class="status-badge ${badgeMod}">
+                ${r.status.toUpperCase()}
+              </span>
+              <span class="quota-label">#${r.id.slice(0, 8)} · ${date}</span>
+            </div>
+
+            <div class="record-content">${escapeHtml(r.content)}</div>
+
+            ${r.flag_reason ? `
+              <div class="flag-alert">
+                Perhatian: ${escapeHtml(r.flag_reason)}
+              </div>
+            ` : ''}
+
+            <div class="record-actions">
+              <div class="record-links">
+                ${r.ig_permalink ? `
+                  <a href="${r.ig_permalink}" target="_blank">Buka di Instagram</a>
+                ` : ''}
+                ${r.image_url ? `
+                  <a href="${r.image_url}" target="_blank">Lihat Kartu Gambar</a>
+                ` : ''}
+              </div>
+
+              <div style="display: flex; gap: var(--space-xs); margin-left: auto;">
+                ${r.status === 'flagged' ? `
+                  <button onclick="approveMenfess('${r.id}')" class="admin-btn admin-btn--success">
+                    Setujui dan Post
+                  </button>
+                  <button onclick="rejectMenfess('${r.id}')" class="admin-btn admin-btn--danger">
+                    Tolak
+                  </button>
+                ` : ''}
+
+                ${r.status === 'posted' ? `
+                  <button onclick="takedownMenfess('${r.id}')" class="admin-btn admin-btn--danger">
+                    Takedown IG
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[m]));
+    }
+
+    async function approveMenfess(id) {
+      if (!confirm('Posting menfess ini ke Instagram sekarang?')) return;
+      try {
+        const res = await fetch(`/api/admin/menfess/${id}/approve`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Berhasil diposting ke Instagram.');
+          loadData();
+        } else {
+          alert(data.error || 'Gagal posting.');
+        }
+      } catch (e) {
+        alert('Gagal menghubungi server.');
+      }
+    }
+
+    async function rejectMenfess(id) {
+      if (!confirm('Tolak menfess ini?')) return;
+      try {
+        await fetch(`/api/admin/menfess/${id}/reject`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        loadData();
+      } catch (e) {
+        alert('Gagal menolak menfess.');
+      }
+    }
+
+    async function takedownMenfess(id) {
+      if (!confirm('Yakin ingin menghapus postingan ini dari Instagram (Takedown)?')) return;
+      try {
+        const res = await fetch(`/api/admin/menfess/${id}/takedown`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Postingan berhasil di-takedown dari Instagram.');
+          loadData();
+        } else {
+          alert(data.error || 'Gagal takedown.');
+        }
+      } catch (e) {
+        alert('Gagal takedown.');
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
