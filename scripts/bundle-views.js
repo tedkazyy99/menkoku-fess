@@ -26,3 +26,8 @@ const out =
 fs.writeFileSync("src/views/templates.ts", out, "utf8");
 console.log("Generated src/views/templates.ts successfully! Size:", out.length);
 
+if (!fs.existsSync("public")) {
+  fs.mkdirSync("public", { recursive: true });
+}
+
+
