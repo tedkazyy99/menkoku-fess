@@ -5,6 +5,7 @@
   "main": "api/index.ts",
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/bundle-views.js",
     "dev": "tsx watch src/dev-server.ts",
     "build": "tsc",
     "start": "node dist/dev-server.js",

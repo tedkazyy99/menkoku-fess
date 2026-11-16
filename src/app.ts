@@ -1,9 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import {
   initDb,
   insertMenfess,
@@ -17,56 +14,32 @@ import { moderateContent, checkRateLimit } from "./services/moderation.js";
 import { generateMenfessImage } from "./services/image.js";
 import { uploadImageToCloud } from "./services/storage.js";
 import { publishToInstagram, deleteFromInstagram } from "./services/instagram.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { formHtml, adminHtml, pageCss, adminCss } from "./views/templates.js";
 
 export const app = new Hono();
 
 app.use("*", cors());
 
-// Initialize database schema on startup
-initDb().catch((err) => console.error("[DB] Init failed:", err));
+// Global error handler: Prevents unhandled serverless 500 crashes
+app.onError((err, c) => {
+  console.error("[Server Error]", err);
+  return c.json(
+    {
+      error: "Internal Server Error",
+      message: err.message,
+    },
+    500
+  );
+});
 
-// Robust multi-path resolution for both local Node and Vercel Serverless
-function findAssetPath(subfolder: string, filename: string): string {
-  const candidates = [
-    path.join(__dirname, subfolder, filename),
-    path.join(__dirname, "..", "src", subfolder, filename),
-    path.join(process.cwd(), "src", subfolder, filename),
-    path.join(process.cwd(), subfolder, filename),
-  ];
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
+// Lazy DB initialization to prevent cold-start crashes
+let dbReady = false;
+async function ensureDb() {
+  if (!dbReady) {
+    await initDb();
+    dbReady = true;
   }
-  return candidates[0];
 }
-
-function readView(filename: string): string {
-  const p = findAssetPath("views", filename);
-  return fs.readFileSync(p, "utf-8");
-}
-
-// Serve CSS styles
-app.get("/styles/:file", (c) => {
-  const filename = c.req.param("file");
-  const filePath = findAssetPath("styles", filename);
-  if (fs.existsSync(filePath)) {
-    c.header("Content-Type", "text/css");
-    return c.body(fs.readFileSync(filePath, "utf-8"));
-  }
-  return c.text("Not found", 404);
-});
-
-// 1. User Web Form
-app.get("/", (c) => {
-  return c.html(readView("form.html"));
-});
-
-// 2. Admin Dashboard Web View
-app.get("/admin", (c) => {
-  return c.html(readView("admin.html"));
-});
 
 // Helper to securely extract client IP from trusted proxy headers
 function getClientIp(c: any): string {
@@ -85,8 +58,31 @@ function getClientIp(c: any): string {
   return "127.0.0.1";
 }
 
+// 1. User Web Form
+app.get("/", (c) => {
+  ensureDb().catch((e) => console.error("[DB Lazy Init]", e));
+  return c.html(formHtml);
+});
+
+// 2. Admin Dashboard Web View
+app.get("/admin", (c) => {
+  ensureDb().catch((e) => console.error("[DB Lazy Init]", e));
+  return c.html(adminHtml);
+});
+
+// Serve self-contained CSS styles directly from memory (0 filesystem dependency)
+app.get("/styles/page.css", (c) => {
+  return c.text(pageCss, 200, { "Content-Type": "text/css" });
+});
+
+app.get("/styles/admin.css", (c) => {
+  return c.text(adminCss, 200, { "Content-Type": "text/css" });
+});
+
 // 3. User Submit Menfess
 app.post("/api/menfess", async (c) => {
+  await ensureDb();
+
   const ip = getClientIp(c);
 
   // Check Persistent Database Rate Limit
@@ -113,7 +109,7 @@ app.post("/api/menfess", async (c) => {
   const id = crypto.randomUUID();
   const now = Date.now();
 
-  // Fix 2: Always save initial record in database first (prevents lost post states)
+  // Always save initial record in database first (prevents lost post states)
   const initialRecord: MenfessRecord = {
     id,
     content,
@@ -137,22 +133,17 @@ app.post("/api/menfess", async (c) => {
     });
   }
 
-  // 100% Auto-post directly to Instagram
+  // Auto-post to Instagram
   try {
-    // A. Generate image card
     const imageBuffer = await generateMenfessImage({ content, id });
-
-    // B. Upload to Cloudinary / Supabase storage
     const uploadRes = await uploadImageToCloud(imageBuffer, `menfess_${id}`);
 
-    // C. Publish to Meta Graph API
     const caption = `[Menfesskan #${id.slice(0, 8)}]\n\n"${content}"\n\n---\nKirim pesan anonim via link di bio!\n#menfesskan #menfess`;
     const igRes = await publishToInstagram({
       imageUrl: uploadRes.url,
       caption,
     });
 
-    // Update status to posted
     await updateMenfessStatus(id, "posted", {
       image_url: uploadRes.url,
       ig_media_id: igRes.mediaId,
@@ -167,7 +158,6 @@ app.post("/api/menfess", async (c) => {
     });
   } catch (err: any) {
     console.error("[Post Error]", err);
-    // On failure, preserve the existing DB record by setting it to flagged for admin review
     await updateMenfessStatus(id, "flagged", {
       flag_reason: `Gagal auto-post ke IG: ${err.message}`,
     });
@@ -186,17 +176,10 @@ function verifyAdmin(c: any): boolean {
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   const validPassword = process.env.ADMIN_PASSWORD;
 
-  // Fail closed if ADMIN_PASSWORD is not explicitly configured
   if (!validPassword || !token) {
-    if (!validPassword) {
-      console.error(
-        "[Security] ADMIN_PASSWORD is not set. All admin requests rejected."
-      );
-    }
     return false;
   }
 
-  // Cryptographically constant-time comparison using fixed-size SHA-256 digests
   const tokenHash = crypto.createHash("sha256").update(token).digest();
   const expectedHash = crypto.createHash("sha256").update(validPassword).digest();
 
@@ -205,6 +188,8 @@ function verifyAdmin(c: any): boolean {
 
 // 4. Admin: Get List & Quota
 app.get("/api/admin/menfess", async (c) => {
+  await ensureDb();
+
   if (!verifyAdmin(c)) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -218,6 +203,8 @@ app.get("/api/admin/menfess", async (c) => {
 
 // 5. Admin: Approve & Post flagged menfess
 app.post("/api/admin/menfess/:id/approve", async (c) => {
+  await ensureDb();
+
   if (!verifyAdmin(c)) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -254,6 +241,8 @@ app.post("/api/admin/menfess/:id/approve", async (c) => {
 
 // 6. Admin: Reject menfess
 app.post("/api/admin/menfess/:id/reject", async (c) => {
+  await ensureDb();
+
   if (!verifyAdmin(c)) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -265,6 +254,8 @@ app.post("/api/admin/menfess/:id/reject", async (c) => {
 
 // 7. Admin: Takedown from Instagram
 app.post("/api/admin/menfess/:id/takedown", async (c) => {
+  await ensureDb();
+
   if (!verifyAdmin(c)) {
     return c.json({ error: "Unauthorized" }, 401);
   }
