@@ -1,5 +1,3 @@
-import { ImageResponse } from "@vercel/og";
-
 export interface RenderMenfessOptions {
   content: string;
   id: string;
@@ -8,6 +6,7 @@ export interface RenderMenfessOptions {
 }
 
 export async function generateMenfessImage(options: RenderMenfessOptions): Promise<Buffer> {
+  const { ImageResponse } = await import("@vercel/og");
   const { content, id, handle = "@yourmenfess" } = options;
   const dateStr = options.date || new Date().toLocaleDateString("id-ID", {
     day: "numeric",
