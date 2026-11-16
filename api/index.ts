@@ -1,3 +1,7 @@
+import { getRequestListener } from "@hono/node-server";
 import { app } from "../src/app.js";
 
-export default app;
+const listener = getRequestListener(app.fetch);
+
+export { app };
+export default Object.assign(listener, { fetch: app.fetch.bind(app) });

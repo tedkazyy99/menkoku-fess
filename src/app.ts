@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import crypto from "crypto";
+import { getRequestListener } from "@hono/node-server";
 import {
   initDb,
   insertMenfess,
@@ -284,3 +285,8 @@ app.get("/api/render-preview", async (c) => {
   c.header("Content-Type", "image/png");
   return c.body(buf as any);
 });
+
+// Vercel Serverless Function export: must be a function or server
+const listener = getRequestListener(app.fetch);
+export default Object.assign(listener, { fetch: app.fetch.bind(app) });
+
