@@ -28,20 +28,11 @@ def login():
     cl = Client()
     cl.challenge_code_handler = challenge_code_handler
 
-    # Emulasikan device Android konsisten (Samsung Galaxy S22)
-    cl.set_device({
-        "app_version": "269.0.0.18.75",
-        "android_version": 31,
-        "android_release": "12.0",
-        "dpi": "480dpi",
-        "resolution": "1080x2340",
-        "manufacturer": "Samsung",
-        "device": "SM-S901B",
-        "model": "Galaxy S22",
-        "cpu": "exynos2200",
-        "version_code": "314665256",
-    })
+    # Gunakan profile device bawaan instagrapi yang sudah lengkap dengan Bloks hash
+    cl.set_locale("id_ID")
+    cl.set_country(62)
 
+    # 1. Cek Sesi Tersimpan
     if SESSION_FILE.exists():
         print(f"[i] Ditemukan file sesi: {SESSION_FILE}")
         try:
@@ -52,9 +43,37 @@ def login():
             return cl
         except Exception as e:
             print(f"[!] Sesi lama kadaluarsa atau tidak valid: {e}")
-            print("[i] Mencoba login ulang...")
+            print("[i] Menyiapkan login baru...\n")
 
-    username = input("Username Instagram : ").strip()
+    print("Pilih metode login:")
+    print("  1. Username & Password (Standar)")
+    print("  2. Cookie 'sessionid' Browser (Rekomendasi jika kena CAA/Challenge)")
+    pilihan = input("Pilihan (1/2, default: 1): ").strip() or "1"
+
+    if pilihan == "2":
+        print("\n--- CARA AMBIL SESSIONID DARI BROWSER ---")
+        print("1. Buka instagram.com di Chrome (pastikan sudah login akun bot).")
+        print("2. Tekan F12 -> tab 'Application' -> menu 'Cookies' -> 'https://www.instagram.com'.")
+        print("3. Copy nilai (value) dari cookie bernama 'sessionid'.")
+        print("------------------------------------------")
+        sessionid = input("Paste cookie sessionid : ").strip()
+        if not sessionid:
+            print("[ERROR] sessionid tidak boleh kosong.")
+            return None
+        try:
+            print("[i] Memverifikasi sessionid...")
+            cl.login_by_sessionid(sessionid)
+            cl.dump_settings(SESSION_FILE)
+            user_info = cl.account_info()
+            print(f"\n[SUCCESS] Login sukses sebagai: @{user_info.username} ({user_info.full_name})")
+            print(f"[i] Sesi disimpan di: {SESSION_FILE}")
+            return cl
+        except Exception as e:
+            print(f"[ERROR] Gagal login via sessionid: {e}")
+            return None
+
+    # Metode 1: Username & Password
+    username = input("\nUsername Instagram : ").strip()
     password = input("Password Instagram : ").strip()
     two_factor = input("Kode 2FA Authenticator (kosongkan jika tidak ada): ").strip() or None
 
@@ -62,17 +81,19 @@ def login():
         print("[i] Menghubungi server Instagram...")
         cl.login(username, password, verification_code=two_factor)
         cl.dump_settings(SESSION_FILE)
-        print(f"[SUCCESS] Login berhasil! Sesi disimpan di: {SESSION_FILE}")
+        print(f"\n[SUCCESS] Login berhasil! Sesi disimpan di: {SESSION_FILE}")
         print("[TIP] worker.py sekarang bisa berjalan otomatis tanpa perlu input password lagi.")
         return cl
     except BadPassword:
         print("[ERROR] Password salah.")
     except ChallengeRequired as e:
         print(f"[ERROR] Instagram meminta verifikasi keamanan (Challenge): {e}")
+        print("[TIP] Gunakan pilihan nomor 2 (Cookie sessionid) untuk bypass challenge ini.")
     except PleaseWaitFewMinutes:
-        print("[ERROR] Terlalu banyak percobaan. Harap tunggu beberapa menit sebelum mencoba lagi.")
+        print("[ERROR] Terlalu banyak percobaan. Harap tunggu beberapa menit atau gunakan metode 2 (sessionid).")
     except Exception as e:
         print(f"[ERROR] Gagal login: {e}")
+        print("[TIP] Jika tetap muncul error Bloks/CAA, gunakan metode 2 (Cookie sessionid dari browser).")
 
     return None
 
