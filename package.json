@@ -2,7 +2,7 @@
   "name": "menfess-platform",
   "version": "1.0.0",
   "description": "Automated Web Menfess platform to Instagram with moderation and admin dashboard",
-  "main": "api/index.ts",
+  "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "prebuild": "node scripts/bundle-views.js",
