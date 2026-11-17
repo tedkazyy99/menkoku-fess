@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import random
 from pathlib import Path
 from dotenv import load_dotenv
@@ -89,25 +90,44 @@ def run_worker():
                 item_id = item["id"]
                 content = item.get("content", "")
                 image_url = item.get("image_url")
-                flag_reason = item.get("flag_reason")  # bisa simpan judul lagu jika ada
+                song_query = item.get("song_query")
+                slides_json = item.get("slides_json")
+                flag_reason = item.get("flag_reason")
 
                 print(f"\n[+] Memproses antrean menfess ID: {item_id}")
                 print(f"    Konten : \"{content[:60]}...\"")
 
-                # Cek jika ada request lagu (misal tersimpan di flag_reason atau kolom musik)
-                music_query = None
-                if flag_reason and flag_reason.startswith("MUSIC:"):
+                # Parse daftar gambar slide
+                images = []
+                if slides_json:
+                    try:
+                        parsed = json.loads(slides_json)
+                        if isinstance(parsed, list):
+                            images = [str(u) for u in parsed if u]
+                    except Exception as e:
+                        print(f"[!] Gagal parse slides_json: {e}")
+
+                if not images and image_url:
+                    images = [image_url]
+
+                # Tentukan musik yang diminta
+                music_query = (song_query or "").strip() or None
+                if not music_query and flag_reason and flag_reason.startswith("MUSIC:"):
                     music_query = flag_reason.replace("MUSIC:", "").strip()
 
-                images = [image_url] if image_url else []
+                print(f"    Total Slide: {len(images)}")
+                if music_query:
+                    print(f"    Request Lagu: {music_query}")
 
                 # Buat caption
+                music_line = f"🎵 Lagu: {music_query}\n" if music_query else ""
                 caption = (
                     f"[Menfesskan #{item_id[:8]}]\n\n"
                     f"\"{content}\"\n\n"
+                    f"{music_line}"
                     f"---\n"
                     f"Kirim menfess anonim via link di bio!\n"
-                    f"#menfesskan #menfess #songfess"
+                    f"#menfesskan #menfess #songfess #tembayo"
                 )
 
                 # 2. Posting ke Instagram via instagrapi
@@ -143,3 +163,4 @@ def run_worker():
 
 if __name__ == "__main__":
     run_worker()
+

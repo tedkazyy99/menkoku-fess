@@ -17,6 +17,7 @@ class MemoryDb {
     if (
       sql.startsWith("CREATE TABLE") ||
       sql.startsWith("CREATE INDEX") ||
+      sql.startsWith("ALTER TABLE") ||
       sql.startsWith("PRAGMA")
     ) {
       rows = [];
@@ -67,6 +68,8 @@ class MemoryDb {
         ig_media_id,
         ig_permalink,
         flag_reason,
+        song_query,
+        slides_json,
         created_at,
         posted_at,
       ] = args;
@@ -78,6 +81,8 @@ class MemoryDb {
         ig_media_id: ig_media_id ? String(ig_media_id) : null,
         ig_permalink: ig_permalink ? String(ig_permalink) : null,
         flag_reason: flag_reason ? String(flag_reason) : null,
+        song_query: song_query ? String(song_query) : null,
+        slides_json: slides_json ? String(slides_json) : null,
         created_at: Number(created_at),
         posted_at: posted_at ? Number(posted_at) : null,
       });

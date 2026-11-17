@@ -71,4 +71,23 @@ test("Moderation & Rate Limiting Test Suite", async (t) => {
     });
     assert.equal(resValid.status, 200);
   });
+
+  await t.test("queues songfess when song_query is provided", async () => {
+    const res = await app.request("/api/menfess", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": "192.168.10.50",
+      },
+      body: JSON.stringify({
+        content: "Halo ini pesan songfess untuk crush di kelas sebelah",
+        song_query: "Nadin Amizah - Rayuan Perempuan Gila",
+      }),
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.status, "queued");
+    assert.equal(data.song_query, "Nadin Amizah - Rayuan Perempuan Gila");
+  });
 });

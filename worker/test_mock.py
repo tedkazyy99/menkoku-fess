@@ -28,3 +28,4 @@ if __name__ == "__main__":
     import sys
     query = sys.argv[1] if len(sys.argv) > 1 else "Nadin Amizah Rayuan Perempuan Gila"
     test_music_search(query)
+

@@ -26,6 +26,9 @@ worker/venv/
 __pycache__/
 worker/session.json
 session.json
+worker/*.jpg
+worker/*.png
+
 
 
 # Hallmark & Logs

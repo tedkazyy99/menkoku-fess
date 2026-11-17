@@ -53,3 +53,4 @@ Worker akan:
 2. Mencari lagu yang diminta pengirim.
 3. Mengunggah carousel (beberapa slide) + musik ke Instagram.
 4. Memberi jeda acak 45–90 detik antar postingan agar terhindar dari spam filter.
+

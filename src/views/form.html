@@ -12,7 +12,6 @@
 /* Hallmark · shape: Workbench · genre: playful · theme: Arcade (deal 3/3, seed retro-menfess-confession-platform-4983·637d30ec·2026-11-16·r0) · job: try · draw: 637d30ec
  * hero: Stage · nav: edge-aligned · footer: mast · imagery: none · signature: tactile CRT confession terminal · arcade: ember/grille
  * axes: dark/pixel/chromatic-ember · posture: full-palette · contrast: pass · fold: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, single-card tactile cabinet bounds */
 @import url("/styles/page.css");
 
 html, body {
@@ -47,7 +46,8 @@ button:disabled, .btn-arcade:disabled {
 
       <div id="alertBox" class="arcade-alert" hidden></div>
 
-      <form id="menfessForm" class="form-group">
+      <form id="menfessForm" class="form-group" enctype="multipart/form-data">
+        <!-- 1. Text Confession -->
         <div class="form-label">
           <label for="content">Pesan Menfess</label>
           <span id="charCount" class="char-counter">0 / 800 CHARS</span>
@@ -56,14 +56,51 @@ button:disabled, .btn-arcade:disabled {
         <textarea
           id="content"
           name="content"
-          rows="5"
+          rows="4"
           placeholder="Tulis pesan atau curhatan kamu di sini… Identitas kamu tidak disimpan."
           class="confession-input"
           maxlength="800"
           required
         ></textarea>
 
-        <button type="submit" id="submitBtn" class="btn-arcade">
+        <!-- 2. Songfess (Lagu Pengiring) -->
+        <div class="form-label" style="margin-top: var(--space-xs);">
+          <label for="songQuery">Lagu Pengiring (Opsional)</label>
+          <span class="field-hint">Songfess</span>
+        </div>
+        <input
+          type="text"
+          id="songQuery"
+          name="song_query"
+          class="confession-text-input"
+          placeholder="Cari lagu di Instagram… cth: Nadin Amizah - Rayuan Perempuan Gila"
+          maxlength="150"
+        />
+
+        <!-- 3. Photo Attachments (Carousel Slides) -->
+        <div class="form-label" style="margin-top: var(--space-xs);">
+          <label for="imageAttachments">Lampiran Foto (Maks 4 Foto, 2MB/foto)</label>
+          <span id="slideBadge" class="slide-badge">1 SLIDE</span>
+        </div>
+
+        <div class="file-dropzone">
+          <input
+            type="file"
+            id="imageAttachments"
+            name="images"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            class="file-input-hidden"
+          />
+          <label for="imageAttachments" class="file-dropzone-label" tabindex="0">
+            <span>📷 + Tambah Foto Lampiran (Maks 4)</span>
+          </label>
+        </div>
+
+        <div id="previewContainer" class="thumbnail-grid" hidden></div>
+
+        <!-- 4. Submit Button -->
+        <button type="submit" id="submitBtn" class="btn-arcade" style="margin-top: var(--space-sm);">
           <span id="btnText">Kirim Menfess</span>
         </button>
       </form>
@@ -74,8 +111,8 @@ button:disabled, .btn-arcade:disabled {
         <ul class="rules-list">
           <li>Tanpa nomor telepon atau kontak pribadi (anti-doxxing).</li>
           <li>Bebas ujaran kebencian, SARA, dan konten vulgar.</li>
-          <li>Pesan yang lolos verifikasi langsung terbit di feed Instagram.</li>
-          <li>Permintaan takedown konten dilayani via DM Instagram.</li>
+          <li>Maksimal 4 foto pendukung (ukuran maks 2MB per foto).</li>
+          <li>Pesan & lagu yang lolos verifikasi langsung diproses ke Instagram.</li>
         </ul>
       </aside>
     </section>
@@ -120,6 +157,10 @@ button:disabled, .btn-arcade:disabled {
 
   <script>
     const textarea = document.getElementById('content');
+    const songInput = document.getElementById('songQuery');
+    const fileInput = document.getElementById('imageAttachments');
+    const previewContainer = document.getElementById('previewContainer');
+    const slideBadge = document.getElementById('slideBadge');
     const charCount = document.getElementById('charCount');
     const form = document.getElementById('menfessForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -132,15 +173,10 @@ button:disabled, .btn-arcade:disabled {
     const closeLegalBtn = document.getElementById('closeLegalModal');
     const confirmLegalBtn = document.getElementById('confirmLegalBtn');
 
-    openLegalBtn.addEventListener('click', () => {
-      legalModal.showModal();
-    });
-
+    openLegalBtn.addEventListener('click', () => legalModal.showModal());
     const closeModal = () => legalModal.close();
     closeLegalBtn.addEventListener('click', closeModal);
     confirmLegalBtn.addEventListener('click', closeModal);
-
-    // Close when clicking outside modal box
     legalModal.addEventListener('click', (e) => {
       if (e.target === legalModal) closeModal();
     });
@@ -155,32 +191,108 @@ button:disabled, .btn-arcade:disabled {
       alertBox.removeAttribute('hidden');
     }
 
+    // File Attachments Management (Max 4, Max 2MB each)
+    let selectedFiles = [];
+    const MAX_FILES = 4;
+    const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+
+    function updateBadgeAndPreviews() {
+      const totalSlides = 1 + selectedFiles.length;
+      slideBadge.textContent = totalSlides === 1 ? '1 SLIDE (TEKS)' : `${totalSlides} SLIDES (1 TEKS + ${selectedFiles.length} FOTO)`;
+
+      previewContainer.innerHTML = '';
+      if (selectedFiles.length === 0) {
+        previewContainer.setAttribute('hidden', '');
+        return;
+      }
+
+      previewContainer.removeAttribute('hidden');
+      selectedFiles.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'thumbnail-item';
+
+        const img = document.createElement('img');
+        img.className = 'thumbnail-img';
+        img.alt = `Slide ${idx + 2}`;
+        img.src = URL.createObjectURL(file);
+
+        const rmBtn = document.createElement('button');
+        rmBtn.type = 'button';
+        rmBtn.className = 'thumbnail-remove-btn';
+        rmBtn.setAttribute('aria-label', `Hapus foto ${idx + 1}`);
+        rmBtn.textContent = '×';
+        rmBtn.addEventListener('click', () => {
+          selectedFiles.splice(idx, 1);
+          updateBadgeAndPreviews();
+        });
+
+        item.appendChild(img);
+        item.appendChild(rmBtn);
+        previewContainer.appendChild(item);
+      });
+    }
+
+    fileInput.addEventListener('change', () => {
+      const files = Array.from(fileInput.files);
+      for (const f of files) {
+        if (selectedFiles.length >= MAX_FILES) {
+          showAlert(`Maksimal ${MAX_FILES} foto lampiran.`, false);
+          break;
+        }
+        if (f.size > MAX_SIZE_BYTES) {
+          showAlert(`File "${f.name}" melebihi batas 2MB. Silakan pilih foto lain.`, false);
+          continue;
+        }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+          showAlert(`Format file "${f.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`, false);
+          continue;
+        }
+        selectedFiles.push(f);
+      }
+      fileInput.value = '';
+      updateBadgeAndPreviews();
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const content = textarea.value.trim();
       if (!content) return;
 
       submitBtn.disabled = true;
-      btnText.textContent = 'Memproses…';
+      btnText.textContent = 'Mengunggah…';
       alertBox.setAttribute('hidden', '');
 
       try {
+        const formData = new FormData();
+        formData.append('content', content);
+        if (songInput.value.trim()) {
+          formData.append('song_query', songInput.value.trim());
+        }
+        selectedFiles.forEach((f) => {
+          formData.append('images', f);
+        });
+
         const res = await fetch('/api/menfess', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+          body: formData,
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
-          if (data.status === 'posted') {
+          if (data.status === 'queued') {
+            const songNote = data.song_query ? ` dengan lagu "${data.song_query}"` : '';
+            showAlert(`Menfess kamu (${data.slidesCount || 1} slide)${songNote} berhasil masuk antrean postingan!`, true);
+          } else if (data.status === 'posted') {
             showAlert('Pesan kamu berhasil dikirim ke feed Instagram.', true);
           } else if (data.status === 'flagged') {
             showAlert('Pesan menunggu verifikasi moderator: ' + (data.flagReason || 'Pemeriksaan keamanan'), true);
           }
           textarea.value = '';
+          songInput.value = '';
+          selectedFiles = [];
           charCount.textContent = '0 / 800 CHARS';
+          updateBadgeAndPreviews();
         } else {
           showAlert(data.error || 'Pesan gagal dikirim. Coba lagi.', false);
         }

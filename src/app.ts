@@ -98,8 +98,58 @@ app.post("/api/menfess", async (c) => {
     );
   }
 
-  const body = await c.req.json().catch(() => ({}));
-  const content = String(body.content || "").trim();
+  // Parse Body (Supports both multipart/form-data and JSON)
+  const contentType = c.req.header("content-type") || "";
+  let content = "";
+  let songQuery = "";
+  const uploadedFiles: File[] = [];
+
+  if (
+    contentType.includes("multipart/form-data") ||
+    contentType.includes("application/x-www-form-urlencoded")
+  ) {
+    const body = await c.req.parseBody({ all: true });
+    content = String(body.content || "").trim();
+    songQuery = String(body.song_query || "").trim();
+    const rawImages = body["images"];
+    if (Array.isArray(rawImages)) {
+      rawImages.forEach((img: any) => {
+        if (img instanceof File) uploadedFiles.push(img);
+      });
+    } else if (rawImages instanceof File) {
+      uploadedFiles.push(rawImages);
+    }
+  } else {
+    const body = await c.req.json().catch(() => ({}));
+    content = String(body.content || "").trim();
+    songQuery = String(body.song_query || "").trim();
+  }
+
+  // Validate uploaded files
+  if (uploadedFiles.length > 4) {
+    return c.json({ success: false, error: "Maksimal 4 foto lampiran." }, 400);
+  }
+
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+  for (const file of uploadedFiles) {
+    if (file.size > MAX_FILE_SIZE) {
+      return c.json(
+        { success: false, error: `Foto "${file.name}" melebihi batas 2MB.` },
+        400
+      );
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return c.json(
+        {
+          success: false,
+          error: `Format foto "${file.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`,
+        },
+        400
+      );
+    }
+  }
 
   // Moderation check
   const modResult = await moderateContent(content);
@@ -118,7 +168,11 @@ app.post("/api/menfess", async (c) => {
     image_url: null,
     ig_media_id: null,
     ig_permalink: null,
-    flag_reason: modResult.passed ? null : modResult.flagReason || "Terindikasi perlu tinjauan",
+    flag_reason: modResult.passed
+      ? null
+      : modResult.flagReason || "Terindikasi perlu tinjauan",
+    song_query: songQuery || null,
+    slides_json: null,
     created_at: now,
     posted_at: null,
   };
@@ -134,11 +188,44 @@ app.post("/api/menfess", async (c) => {
     });
   }
 
-  // Auto-post to Instagram
   try {
+    // 1. Generate Slide 1 Image Card
     const imageBuffer = await generateMenfessImage({ content, id });
-    const uploadRes = await uploadImageToCloud(imageBuffer, `menfess_${id}`);
+    const uploadRes = await uploadImageToCloud(imageBuffer, `menfess_${id}_slide1`);
+    const allSlideUrls: string[] = [uploadRes.url];
 
+    // 2. Upload any attached user photos to Cloudinary
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const file = uploadedFiles[i];
+      const arrayBuf = await file.arrayBuffer();
+      const photoBuf = Buffer.from(arrayBuf);
+      const photoUpload = await uploadImageToCloud(
+        photoBuf,
+        `menfess_${id}_slide_${i + 2}`
+      );
+      allSlideUrls.push(photoUpload.url);
+    }
+
+    const slidesJson = JSON.stringify(allSlideUrls);
+
+    // If song is requested OR multiple slides present -> Queue for Python Publisher Worker!
+    if (songQuery || uploadedFiles.length > 0) {
+      await updateMenfessStatus(id, "queued", {
+        image_url: uploadRes.url,
+        slides_json: slidesJson,
+        song_query: songQuery,
+      });
+
+      return c.json({
+        success: true,
+        status: "queued",
+        slidesCount: allSlideUrls.length,
+        song_query: songQuery,
+        message: "Menfess berlagu kamu berhasil masuk antrean postingan!",
+      });
+    }
+
+    // Single text card without song -> Post directly to Meta Graph API
     const caption = `[Menfesskan #${id.slice(0, 8)}]\n\n"${content}"\n\n---\nKirim pesan anonim via link di bio!\n#menfesskan #menfess`;
     const igRes = await publishToInstagram({
       imageUrl: uploadRes.url,
@@ -147,6 +234,7 @@ app.post("/api/menfess", async (c) => {
 
     await updateMenfessStatus(id, "posted", {
       image_url: uploadRes.url,
+      slides_json: slidesJson,
       ig_media_id: igRes.mediaId,
       ig_permalink: igRes.permalink,
       posted_at: Date.now(),
@@ -160,13 +248,13 @@ app.post("/api/menfess", async (c) => {
   } catch (err: any) {
     console.error("[Post Error]", err);
     await updateMenfessStatus(id, "flagged", {
-      flag_reason: `Gagal auto-post ke IG: ${err.message}`,
+      flag_reason: `Gagal memproses menfess: ${err.message}`,
     });
 
     return c.json({
       success: true,
       status: "flagged",
-      flagReason: `Gagal auto-post ke IG (${err.message}). Tersimpan di antrean admin.`,
+      flagReason: `Gagal memproses menfess (${err.message}). Tersimpan di antrean admin.`,
     });
   }
 });

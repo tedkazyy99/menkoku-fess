@@ -3,11 +3,13 @@ import { db } from "./client.js";
 export interface MenfessRecord {
   id: string;
   content: string;
-  status: "pending" | "posted" | "flagged" | "rejected" | "deleted";
+  status: "pending" | "posted" | "flagged" | "rejected" | "deleted" | "queued";
   image_url: string | null;
   ig_media_id: string | null;
   ig_permalink: string | null;
   flag_reason: string | null;
+  song_query?: string | null;
+  slides_json?: string | null;
   created_at: number;
   posted_at: number | null;
 }
@@ -22,10 +24,20 @@ export async function initDb(): Promise<void> {
       ig_media_id TEXT,
       ig_permalink TEXT,
       flag_reason TEXT,
+      song_query TEXT,
+      slides_json TEXT,
       created_at INTEGER NOT NULL,
       posted_at INTEGER
     );
   `);
+
+  // Migrasi aman untuk database yang sudah jalan
+  try {
+    await db.execute(`ALTER TABLE menfess ADD COLUMN song_query TEXT;`);
+  } catch {}
+  try {
+    await db.execute(`ALTER TABLE menfess ADD COLUMN slides_json TEXT;`);
+  } catch {}
 
   await db.execute(`
     CREATE INDEX IF NOT EXISTS idx_menfess_status ON menfess(status);
@@ -95,8 +107,8 @@ export async function checkDbRateLimit(
 
 export async function insertMenfess(record: MenfessRecord): Promise<void> {
   await db.execute({
-    sql: `INSERT INTO menfess (id, content, status, image_url, ig_media_id, ig_permalink, flag_reason, created_at, posted_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO menfess (id, content, status, image_url, ig_media_id, ig_permalink, flag_reason, song_query, slides_json, created_at, posted_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       record.id,
       record.content,
@@ -105,6 +117,8 @@ export async function insertMenfess(record: MenfessRecord): Promise<void> {
       record.ig_media_id,
       record.ig_permalink,
       record.flag_reason,
+      record.song_query || null,
+      record.slides_json || null,
       record.created_at,
       record.posted_at,
     ],
@@ -134,6 +148,14 @@ export async function updateMenfessStatus(
   if (updates.flag_reason !== undefined) {
     fields.push("flag_reason = ?");
     args.push(updates.flag_reason);
+  }
+  if (updates.song_query !== undefined) {
+    fields.push("song_query = ?");
+    args.push(updates.song_query);
+  }
+  if (updates.slides_json !== undefined) {
+    fields.push("slides_json = ?");
+    args.push(updates.slides_json);
   }
   if (updates.posted_at !== undefined) {
     fields.push("posted_at = ?");
@@ -169,6 +191,8 @@ export async function getMenfessList(limit = 50, status?: string): Promise<Menfe
     ig_media_id: r.ig_media_id ? String(r.ig_media_id) : null,
     ig_permalink: r.ig_permalink ? String(r.ig_permalink) : null,
     flag_reason: r.flag_reason ? String(r.flag_reason) : null,
+    song_query: r.song_query ? String(r.song_query) : null,
+    slides_json: r.slides_json ? String(r.slides_json) : null,
     created_at: Number(r.created_at),
     posted_at: r.posted_at ? Number(r.posted_at) : null,
   }));
@@ -191,6 +215,8 @@ export async function getMenfessById(id: string): Promise<MenfessRecord | null> 
     ig_media_id: row.ig_media_id ? String(row.ig_media_id) : null,
     ig_permalink: row.ig_permalink ? String(row.ig_permalink) : null,
     flag_reason: row.flag_reason ? String(row.flag_reason) : null,
+    song_query: row.song_query ? String(row.song_query) : null,
+    slides_json: row.slides_json ? String(row.slides_json) : null,
     created_at: Number(row.created_at),
     posted_at: row.posted_at ? Number(row.posted_at) : null,
   };

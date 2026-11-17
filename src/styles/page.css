@@ -170,6 +170,142 @@ html, body {
   outline-offset: 2px;
 }
 
+/* Single-line text input (Songfess) */
+.confession-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--color-paper);
+  border: var(--rule-bar) solid var(--color-rule);
+  border-radius: var(--radius-card);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  min-height: 44px;
+  transition: border-color var(--dur-micro) var(--ease-out);
+}
+
+.confession-text-input:focus {
+  outline: none;
+  border-color: var(--color-focus);
+}
+
+.confession-text-input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.field-hint {
+  font-family: var(--font-outlier);
+  font-size: var(--text-xs);
+  color: var(--color-accent-2);
+}
+
+.slide-badge {
+  font-family: var(--font-outlier);
+  font-size: var(--text-xs);
+  color: var(--color-accent-ink);
+  background: var(--color-accent);
+  padding: 2px var(--space-xs);
+  border: var(--rule-hair) solid var(--color-ink);
+  letter-spacing: 0.5px;
+}
+
+/* Photo Dropzone & Upload */
+.file-dropzone {
+  position: relative;
+  border: var(--rule-bar) dashed var(--color-rule);
+  border-radius: var(--radius-card);
+  background: var(--color-paper);
+  transition: border-color var(--dur-micro) var(--ease-out), background var(--dur-micro) var(--ease-out);
+}
+
+.file-dropzone:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 5%, var(--color-paper));
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-dropzone-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  min-height: 48px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-ink-2);
+}
+
+.file-dropzone-label:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Thumbnail Grid */
+.thumbnail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+}
+
+.thumbnail-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper-2);
+  overflow: hidden;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbnail-remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--color-shade) 80%, transparent);
+  color: #fff;
+  border: 1px solid var(--color-ink);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+}
+
+.thumbnail-remove-btn:hover {
+  background: var(--color-crt-r);
+}
+
+.thumbnail-remove-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+
 /* Arcade Push Button */
 .btn-arcade {
   width: 100%;
