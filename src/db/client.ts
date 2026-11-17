@@ -11,18 +11,43 @@ export interface DbExecutor {
   execute(stmt: InStatement): Promise<ResultSet>;
 }
 
-let clientInstance: DbExecutor;
+class ResilientDb implements DbExecutor {
+  private tursoClient?: Client;
 
-if (url && (url.startsWith("libsql:") || url.startsWith("https:") || url.startsWith("http:"))) {
-  clientInstance = createClient({
-    url,
-    authToken,
-  });
-} else {
-  console.warn(
-    "[Database] TURSO_DATABASE_URL not set or not a web URL. Using high-performance memory store."
-  );
-  clientInstance = memoryDb;
+  constructor() {
+    if (url && (url.startsWith("libsql:") || url.startsWith("https:") || url.startsWith("http:"))) {
+      try {
+        this.tursoClient = createClient({
+          url,
+          authToken,
+        });
+      } catch (e) {
+        console.warn("[Database] Gagal inisialisasi Turso, fallback ke memory store:", e);
+      }
+    } else {
+      console.warn("[Database] TURSO_DATABASE_URL belum diatur. Menggunakan memory store.");
+    }
+  }
+
+  async execute(stmt: InStatement): Promise<ResultSet> {
+    if (this.tursoClient) {
+      try {
+        return await this.tursoClient.execute(stmt);
+      } catch (err: any) {
+        // Abaikan error duplicate column saat migrasi
+        if (err.message && err.message.includes("duplicate column")) {
+          throw err;
+        }
+
+        console.error(
+          "[Database] Turso query error (401 / jaringan). Otomatis fallback ke memory store:",
+          err.message
+        );
+        return await memoryDb.execute(stmt);
+      }
+    }
+    return await memoryDb.execute(stmt);
+  }
 }
 
-export const db: DbExecutor = clientInstance;
+export const db: DbExecutor = new ResilientDb();

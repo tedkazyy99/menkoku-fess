@@ -73,11 +73,12 @@ test("Moderation & Rate Limiting Test Suite", async (t) => {
   });
 
   await t.test("queues songfess when song_query is provided", async () => {
+    const randomIp = `192.168.77.${Math.floor(Math.random() * 200) + 1}`;
     const res = await app.request("/api/menfess", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-forwarded-for": "192.168.10.50",
+        "x-forwarded-for": randomIp,
       },
       body: JSON.stringify({
         content: "Halo ini pesan songfess untuk crush di kelas sebelah",
