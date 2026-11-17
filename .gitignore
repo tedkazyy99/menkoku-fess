@@ -19,6 +19,15 @@ dist/
 build/
 .vercel/
 
+# Python Virtualenv & Sessions
+worker/venv/
+.venv/
+*.pyc
+__pycache__/
+worker/session.json
+session.json
+
+
 # Hallmark & Logs
 .hallmark/
 npm-debug.log*
