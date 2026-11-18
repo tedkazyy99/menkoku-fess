@@ -218,6 +218,7 @@ app.post("/api/menfess", async (c) => {
 
       return c.json({
         success: true,
+        id,
         status: "queued",
         slidesCount: allSlideUrls.length,
         song_query: songQuery,

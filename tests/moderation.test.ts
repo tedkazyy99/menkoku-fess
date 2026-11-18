@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { moderateContent, checkRateLimit } from "../src/services/moderation.js";
 import { initDb } from "../src/db/schema.js";
+import { db } from "../src/db/client.js";
 import { app } from "../src/app.js";
 
 test("Moderation & Rate Limiting Test Suite", async (t) => {
@@ -90,5 +91,10 @@ test("Moderation & Rate Limiting Test Suite", async (t) => {
     assert.equal(data.success, true);
     assert.equal(data.status, "queued");
     assert.equal(data.song_query, "Nadin Amizah - Rayuan Perempuan Gila");
+
+    // Clean up test record immediately so worker doesn't pick it up
+    if (data.id) {
+      await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [data.id] });
+    }
   });
 });
