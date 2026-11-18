@@ -191,20 +191,24 @@ app.post("/api/menfess", async (c) => {
   try {
     // 1. Generate Slide 1 Image Card
     const imageBuffer = await generateMenfessImage({ content, id });
-    const uploadRes = await uploadImageToCloud(imageBuffer, `menfess_${id}_slide1`);
-    const allSlideUrls: string[] = [uploadRes.url];
+    const slide1Promise = uploadImageToCloud(imageBuffer, `menfess_${id}_slide1`);
 
-    // 2. Upload any attached user photos to Cloudinary
-    for (let i = 0; i < uploadedFiles.length; i++) {
-      const file = uploadedFiles[i];
+    // 2. Upload any attached user photos to Cloudinary in parallel
+    const attachmentPromises = uploadedFiles.map(async (file, i) => {
       const arrayBuf = await file.arrayBuffer();
       const photoBuf = Buffer.from(arrayBuf);
-      const photoUpload = await uploadImageToCloud(
-        photoBuf,
-        `menfess_${id}_slide_${i + 2}`
-      );
-      allSlideUrls.push(photoUpload.url);
-    }
+      return uploadImageToCloud(photoBuf, `menfess_${id}_slide_${i + 2}`);
+    });
+
+    const [uploadRes, ...attachmentUploads] = await Promise.all([
+      slide1Promise,
+      ...attachmentPromises,
+    ]);
+
+    const allSlideUrls: string[] = [
+      uploadRes.url,
+      ...attachmentUploads.map((res) => res.url),
+    ];
 
     const slidesJson = JSON.stringify(allSlideUrls);
 

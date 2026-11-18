@@ -191,10 +191,11 @@ button:disabled, .btn-arcade:disabled {
       alertBox.removeAttribute('hidden');
     }
 
-    // File Attachments Management (Max 4, Max 2MB each)
+    // File Attachments Management (Max 4, Max 2MB each, Max 3.8MB total)
     let selectedFiles = [];
     const MAX_FILES = 4;
     const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+    const MAX_TOTAL_BYTES = 3.8 * 1024 * 1024; // 3.8MB to stay within Vercel's 4.5MB limit
 
     function updateBadgeAndPreviews() {
       const totalSlides = 1 + selectedFiles.length;
@@ -243,6 +244,11 @@ button:disabled, .btn-arcade:disabled {
           showAlert(`File "${f.name}" melebihi batas 2MB. Silakan pilih foto lain.`, false);
           continue;
         }
+        const currentTotal = selectedFiles.reduce((acc, curr) => acc + curr.size, 0);
+        if (currentTotal + f.size > MAX_TOTAL_BYTES) {
+          showAlert(`Total ukuran semua foto melebihi batas 3.8MB. Kurangi foto atau kompres terlebih dahulu.`, false);
+          break;
+        }
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
           showAlert(`Format file "${f.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`, false);
           continue;
@@ -277,7 +283,14 @@ button:disabled, .btn-arcade:disabled {
           body: formData,
         });
 
-        const data = await res.json();
+        let data = null;
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          data = await res.json();
+        } else {
+          const rawText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 120) || res.statusText || 'Server Error'}`);
+        }
 
         if (res.ok && data.success) {
           if (data.status === 'queued') {
@@ -294,10 +307,12 @@ button:disabled, .btn-arcade:disabled {
           charCount.textContent = '0 / 800 CHARS';
           updateBadgeAndPreviews();
         } else {
-          showAlert(data.error || 'Pesan gagal dikirim. Coba lagi.', false);
+          showAlert(data?.error || `Error ${res.status}: Pesan gagal dikirim.`, false);
         }
       } catch (err) {
-        showAlert('Koneksi terganggu. Silakan coba sesaat lagi.', false);
+        console.error('[Menfess Submit Error]', err);
+        const errMsg = err?.message || 'Gagal mengirim pesan.';
+        showAlert(`Gagal mengirim: ${errMsg}`, false);
       } finally {
         submitBtn.disabled = false;
         btnText.textContent = 'Kirim Menfess';
