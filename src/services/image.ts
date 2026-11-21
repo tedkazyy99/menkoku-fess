@@ -1,3 +1,5 @@
+import { ImageResponse } from "@vercel/og";
+
 export interface RenderMenfessOptions {
   content: string;
   id: string;
@@ -13,8 +15,150 @@ export interface RenderMenfessPhotoOptions {
   handle?: string;
 }
 
+function buildCardHeader(id: string, dateStr: string, paddingBottom = "32px") {
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "2px solid #2f2042",
+        paddingBottom,
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    width: "52px",
+                    height: "52px",
+                    borderRadius: "8px",
+                    backgroundColor: "#f97316",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "900",
+                    fontSize: "28px",
+                    color: "#160a22",
+                  },
+                  children: "S",
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    flexDirection: "column",
+                  },
+                  children: [
+                    {
+                      type: "span",
+                      props: {
+                        style: {
+                          fontSize: "28px",
+                          fontWeight: "800",
+                          color: "#f5f0fa",
+                          letterSpacing: "-0.5px",
+                        },
+                        children: "Stembayo Menfess",
+                      },
+                    },
+                    {
+                      type: "span",
+                      props: {
+                        style: {
+                          fontSize: "18px",
+                          color: "#bef264",
+                          fontFamily: "monospace",
+                          fontWeight: "700",
+                        },
+                        children: `#${id.slice(0, 8)}`,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: {
+              fontSize: "20px",
+              color: "#9d8fa8",
+              fontWeight: "500",
+            },
+            children: dateStr,
+          },
+        },
+      ],
+    },
+  };
+}
+
+function buildCardFooter(handle: string, paddingTop = "32px") {
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderTop: "2px solid #2f2042",
+        paddingTop,
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            },
+            children: [
+              {
+                type: "span",
+                props: {
+                  style: {
+                    fontSize: "22px",
+                    fontWeight: "700",
+                    color: "#f97316",
+                  },
+                  children: handle,
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: {
+              fontSize: "18px",
+              color: "#9d8fa8",
+            },
+            children: "Kirim pesan via link di bio",
+          },
+        },
+      ],
+    },
+  };
+}
+
 export async function generateMenfessImage(options: RenderMenfessOptions): Promise<Buffer> {
-  const { ImageResponse } = await import("@vercel/og");
   const { content, id, handle = process.env.IG_HANDLE || "@fesstembayo" } = options;
   const dateStr = options.date || new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -49,98 +193,7 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
         fontFamily: "sans-serif",
       },
       children: [
-        // Header
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "2px solid #2f2042",
-              paddingBottom: "32px",
-            },
-            children: [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                  },
-                  children: [
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          width: "52px",
-                          height: "52px",
-                          borderRadius: "8px",
-                          backgroundColor: "#f97316",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "900",
-                          fontSize: "28px",
-                          color: "#160a22",
-                        },
-                        children: "S",
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          display: "flex",
-                          flexDirection: "column",
-                        },
-                        children: [
-                          {
-                            type: "span",
-                            props: {
-                              style: {
-                                fontSize: "28px",
-                                fontWeight: "800",
-                                color: "#f5f0fa",
-                                letterSpacing: "-0.5px",
-                              },
-                              children: "Stembayo Menfess",
-                            },
-                          },
-                          {
-                            type: "span",
-                            props: {
-                              style: {
-                                fontSize: "18px",
-                                color: "#bef264",
-                                fontFamily: "monospace",
-                                fontWeight: "700",
-                              },
-                              children: `#${id.slice(0, 8)}`,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: "20px",
-                    color: "#9d8fa8",
-                    fontWeight: "500",
-                  },
-                  children: dateStr,
-                },
-              },
-            ],
-          },
-        },
-
+        buildCardHeader(id, dateStr, "32px"),
         // Content Body
         {
           type: "div",
@@ -170,55 +223,7 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
             ],
           },
         },
-
-        // Footer
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTop: "2px solid #2f2042",
-              paddingTop: "32px",
-            },
-            children: [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  },
-                  children: [
-                    {
-                      type: "span",
-                      props: {
-                        style: {
-                          fontSize: "22px",
-                          fontWeight: "700",
-                          color: "#f97316",
-                        },
-                        children: handle,
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: "18px",
-                    color: "#9d8fa8",
-                  },
-                  children: "Kirim pesan via link di bio",
-                },
-              },
-            ],
-          },
-        },
+        buildCardFooter(handle, "32px"),
       ],
     },
   };
@@ -233,7 +238,6 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
 }
 
 export async function generateMenfessPhotoImage(options: RenderMenfessPhotoOptions): Promise<Buffer> {
-  const { ImageResponse } = await import("@vercel/og");
   const { photoBuffer, photoMime = "image/jpeg", id, handle = process.env.IG_HANDLE || "@fesstembayo" } = options;
   const dateStr = options.date || new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -260,98 +264,7 @@ export async function generateMenfessPhotoImage(options: RenderMenfessPhotoOptio
         fontFamily: "sans-serif",
       },
       children: [
-        // Header
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "2px solid #2f2042",
-              paddingBottom: "24px",
-            },
-            children: [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                  },
-                  children: [
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          width: "52px",
-                          height: "52px",
-                          borderRadius: "8px",
-                          backgroundColor: "#f97316",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "900",
-                          fontSize: "28px",
-                          color: "#160a22",
-                        },
-                        children: "S",
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          display: "flex",
-                          flexDirection: "column",
-                        },
-                        children: [
-                          {
-                            type: "span",
-                            props: {
-                              style: {
-                                fontSize: "28px",
-                                fontWeight: "800",
-                                color: "#f5f0fa",
-                                letterSpacing: "-0.5px",
-                              },
-                              children: "Stembayo Menfess",
-                            },
-                          },
-                          {
-                            type: "span",
-                            props: {
-                              style: {
-                                fontSize: "18px",
-                                color: "#bef264",
-                                fontFamily: "monospace",
-                                fontWeight: "700",
-                              },
-                              children: `#${id.slice(0, 8)}`,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: "20px",
-                    color: "#9d8fa8",
-                    fontWeight: "500",
-                  },
-                  children: dateStr,
-                },
-              },
-            ],
-          },
-        },
-
+        buildCardHeader(id, dateStr, "24px"),
         // Framed Photo Body
         {
           type: "div",
@@ -382,55 +295,7 @@ export async function generateMenfessPhotoImage(options: RenderMenfessPhotoOptio
             ],
           },
         },
-
-        // Footer
-        {
-          type: "div",
-          props: {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderTop: "2px solid #2f2042",
-              paddingTop: "24px",
-            },
-            children: [
-              {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  },
-                  children: [
-                    {
-                      type: "span",
-                      props: {
-                        style: {
-                          fontSize: "22px",
-                          fontWeight: "700",
-                          color: "#f97316",
-                        },
-                        children: handle,
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                type: "div",
-                props: {
-                  style: {
-                    fontSize: "18px",
-                    color: "#9d8fa8",
-                  },
-                  children: "Kirim pesan via link di bio",
-                },
-              },
-            ],
-          },
-        },
+        buildCardFooter(handle, "24px"),
       ],
     },
   };
@@ -443,4 +308,3 @@ export async function generateMenfessPhotoImage(options: RenderMenfessPhotoOptio
   const arrayBuffer = await imageResponse.arrayBuffer();
   return Buffer.from(arrayBuffer);
 }
-
