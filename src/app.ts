@@ -23,7 +23,65 @@ import { formHtml, adminHtml, pageCss, adminCss } from "./views/templates.js";
 
 export const app = new Hono();
 
-app.use("*", cors());
+// Configure restricted CORS policy if ALLOWED_ORIGINS is provided
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : ["*"];
+
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      if (allowedOrigins.includes("*") || !origin) return origin || "*";
+      if (allowedOrigins.includes(origin)) return origin;
+      return null;
+    },
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Helper to verify true binary image magic bytes (JPEG, PNG, WebP)
+export function isValidImageMagicBytes(buffer: Uint8Array): boolean {
+  if (buffer.length < 4) return false;
+
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return true;
+  }
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return true;
+  }
+
+  // WebP: 52 49 46 46 (RIFF) ... 57 45 42 50 (WEBP) at bytes 8-11
+  if (
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 // Global error handler: Prevents unhandled serverless 500 crashes
 app.onError((err, c) => {
@@ -235,6 +293,16 @@ app.post("/api/menfess", async (c) => {
         {
           success: false,
           error: `Format foto "${file.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`,
+        },
+        400
+      );
+    }
+    const sliceBuffer = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (!isValidImageMagicBytes(sliceBuffer)) {
+      return c.json(
+        {
+          success: false,
+          error: `File "${file.name}" bukan format gambar JPG, PNG, atau WebP yang valid (header binary tidak cocok).`,
         },
         400
       );

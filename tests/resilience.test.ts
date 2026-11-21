@@ -4,8 +4,9 @@ import assert from "node:assert/strict";
 import { uploadImageToCloud } from "../src/services/storage.js";
 import { publishToInstagram, deleteFromInstagram } from "../src/services/instagram.js";
 import { db } from "../src/db/client.js";
-import { app } from "../src/app.js";
+import { app, isValidImageMagicBytes } from "../src/app.js";
 import { getMenfessById } from "../src/db/schema.js";
+import { getSalt } from "../src/services/moderation.js";
 
 test("Fail-Fast & Resilience Test Suite", async (t) => {
   await t.test("storage: throws real error when credentials are missing", async () => {
@@ -210,5 +211,71 @@ test("Fail-Fast & Resilience Test Suite", async (t) => {
     assert.ok(ids.includes(pId), "Processing items must be in queued list");
 
     await db.execute({ sql: "DELETE FROM menfess WHERE id IN (?, ?)", args: [qId, pId] });
+  });
+
+  await t.test("security: isValidImageMagicBytes verifies JPEG, PNG, WebP headers and rejects disguises", async () => {
+    // Valid JPEG header
+    const validJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+    assert.equal(isValidImageMagicBytes(validJpeg), true);
+
+    // Valid PNG header
+    const validPng = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    assert.equal(isValidImageMagicBytes(validPng), true);
+
+    // Valid WebP header: RIFF....WEBP
+    const validWebp = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, // RIFF
+      0x20, 0x00, 0x00, 0x00, // size
+      0x57, 0x45, 0x42, 0x50, // WEBP
+    ]);
+    assert.equal(isValidImageMagicBytes(validWebp), true);
+
+    // Disguised plain text or malicious binary
+    const plainText = new TextEncoder().encode("Hello world this is not an image");
+    assert.equal(isValidImageMagicBytes(plainText), false);
+
+    // Short buffer
+    const shortBuffer = new Uint8Array([0xff, 0xd8]);
+    assert.equal(isValidImageMagicBytes(shortBuffer), false);
+  });
+
+  await t.test("security: /api/menfess rejects multipart upload with mismatched image magic bytes", async () => {
+    const formData = new FormData();
+    formData.append("content", "Testing invalid binary disguised as jpg");
+    
+    // Fake file with image/jpeg mime and .jpg extension but text content
+    const fakeFile = new File([new TextEncoder().encode("NOT_AN_IMAGE_FILE")], "hacked.jpg", {
+      type: "image/jpeg",
+    });
+    formData.append("images", fakeFile);
+
+    const randomIp = `192.168.105.${Math.floor(Math.random() * 200) + 1}`;
+    const res = await app.request("/api/menfess", {
+      method: "POST",
+      headers: {
+        "x-forwarded-for": randomIp,
+      },
+      body: formData,
+    });
+
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.success, false);
+    assert.match(data.error, /header binary tidak cocok/i);
+  });
+
+  await t.test("security: getSalt returns secure salt and CORS headers are handled", async () => {
+    const salt = getSalt();
+    assert.ok(salt && salt.length > 0, "Salt must be present and non-empty");
+
+    // Test CORS preflight/request
+    const res = await app.request("/api/music/search?q=test", {
+      method: "GET",
+      headers: {
+        Origin: "https://example.com",
+      },
+    });
+    const corsHeader = res.headers.get("access-control-allow-origin");
+    assert.ok(corsHeader, "CORS allow-origin header should be present");
   });
 });

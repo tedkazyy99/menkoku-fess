@@ -21,11 +21,24 @@ const BLACKLISTED_WORDS = [
 
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 menit per submission
 
+let saltWarned = false;
+export function getSalt(): string {
+  const salt = process.env.SALT;
+  if (!salt || salt === "menfess_salt") {
+    if (!saltWarned && process.env.NODE_ENV !== "test" && !process.argv.some((a) => a.includes("test"))) {
+      console.warn("[Security Warning] SALT belum diatur atau menggunakan default di .env! Harap set SALT unik untuk melindungi privasi pengirim.");
+      saltWarned = true;
+    }
+    return salt || "menfess_default_salt_change_in_prod";
+  }
+  return salt;
+}
+
 export async function checkRateLimit(ip: string): Promise<{ allowed: boolean; waitSeconds?: number }> {
-  // Hash IP with salt to protect user anonymity
+  // Hash IP with secure salt to protect user anonymity
   const ipHash = crypto
     .createHash("sha256")
-    .update(ip + (process.env.SALT || "menfess_salt"))
+    .update(ip + getSalt())
     .digest("hex");
 
   return await checkDbRateLimit(ipHash, RATE_LIMIT_WINDOW_MS);
