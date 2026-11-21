@@ -19,6 +19,35 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 if not DATABASE_URL:
     raise RuntimeError("[Config Error] DATABASE_URL tidak ditemukan di .env!")
 
+def recover_stale_processing_jobs(on_startup: bool = False):
+    """
+    Pulihkan job yang tersangkut di status 'processing' akibat worker crash atau restart.
+    - on_startup=True: kembalikan semua 'processing' menjadi 'queued'.
+    - on_startup=False: kembalikan 'processing' yang sudah lebih dari 15 menit tanpa progres.
+    """
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                if on_startup:
+                    cur.execute("""
+                        UPDATE menfess
+                        SET status = 'queued'
+                        WHERE status = 'processing';
+                    """)
+                else:
+                    cur.execute("""
+                        UPDATE menfess
+                        SET status = 'queued'
+                        WHERE status = 'processing'
+                          AND created_at < (EXTRACT(EPOCH FROM NOW()) * 1000 - 900000);
+                    """)
+                recovered = cur.rowcount
+                conn.commit()
+                if recovered > 0:
+                    print(f"[Recovery] Memulihkan {recovered} job dari 'processing' kembali ke 'queued'.")
+    except Exception as e:
+        print(f"[Recovery Error] Gagal memulihkan job processing: {e}")
+
 def claim_next_job():
     """
     Klaim job tertua secara atomik menggunakan FOR UPDATE SKIP LOCKED.
@@ -71,6 +100,7 @@ def run_worker():
     print("  MENFESSKAN - PYTHON QUEUE PUBLISHER WORKER (POSTGRESQL)")
     print("=" * 60)
     print(f"[i] Worker aktif. Terhubung ke PostgreSQL: {safe_db_info}")
+    recover_stale_processing_jobs(on_startup=True)
     print("[i] Menunggu pesan berstatus 'queued'...")
 
     while True:
@@ -78,7 +108,8 @@ def run_worker():
             item = claim_next_job()
 
             if not item:
-                # Antrean kosong, polling setiap 10 detik
+                # Antrean kosong, periksa apakah ada job processing tersangkut lalu tidur 10 detik
+                recover_stale_processing_jobs(on_startup=False)
                 time.sleep(10)
                 continue
 

@@ -70,45 +70,55 @@ def publish_menfess_with_music(
                 }
                 print(f"[Musik] Lagu terkonfirmasi: '{track.title}' oleh '{track.display_artist}' (ID: {track.id})")
             else:
-                raise ValueError(f"Lagu tidak ditemukan di katalog Instagram: '{music_query}'")
+                print(f"[Musik] Peringatan: Lagu '{music_query}' tidak ditemukan di katalog Instagram.")
+                print("[Musik] Melanjutkan posting tanpa audio agar menfess tidak gagal terbit.")
         except Exception as e:
-            raise RuntimeError(f"Gagal verifikasi musik '{music_query}': {e}")
+            print(f"[Musik] Peringatan: Gagal mencari/verifikasi lagu '{music_query}': {e}")
+            print("[Musik] Melanjutkan posting tanpa audio agar menfess tidak gagal terbit.")
 
     is_multiple = len(local_paths) > 1
 
-    print(f"[Publish] Mengunggah {len(local_paths)} slide ke feed Instagram...")
-    if is_multiple:
-        if track:
-            media = cl.album_upload_with_music(
-                paths=local_paths,
-                caption=caption,
-                track=track,
-            )
+    try:
+        print(f"[Publish] Mengunggah {len(local_paths)} slide ke feed Instagram...")
+        if is_multiple:
+            if track:
+                media = cl.album_upload_with_music(
+                    paths=local_paths,
+                    caption=caption,
+                    track=track,
+                )
+            else:
+                media = cl.album_upload(
+                    paths=local_paths,
+                    caption=caption,
+                )
         else:
-            media = cl.album_upload(
-                paths=local_paths,
-                caption=caption,
-            )
-    else:
-        if track:
-            media = cl.photo_upload_with_music(
-                path=local_paths[0],
-                caption=caption,
-                track=track,
-            )
-        else:
-            media = cl.photo_upload(
-                path=local_paths[0],
-                caption=caption,
-            )
+            if track:
+                media = cl.photo_upload_with_music(
+                    path=local_paths[0],
+                    caption=caption,
+                    track=track,
+                )
+            else:
+                media = cl.photo_upload(
+                    path=local_paths[0],
+                    caption=caption,
+                )
 
-    post_url = f"https://www.instagram.com/p/{media.code}/"
-    print(f"[SUCCESS] Berhasil diposting! Link: {post_url}")
+        post_url = f"https://www.instagram.com/p/{media.code}/"
+        print(f"[SUCCESS] Berhasil diposting! Link: {post_url}")
 
-    return {
-        "success": True,
-        "media_id": str(media.id),
-        "code": media.code,
-        "url": post_url,
-        "track": confirmed_track_info,
-    }
+        return {
+            "success": True,
+            "media_id": str(media.id),
+            "code": media.code,
+            "url": post_url,
+            "track": confirmed_track_info,
+        }
+    finally:
+        for p in local_paths:
+            try:
+                if p.exists():
+                    p.unlink()
+            except Exception as e:
+                print(f"[Cleanup Warning] Gagal menghapus {p}: {e}")

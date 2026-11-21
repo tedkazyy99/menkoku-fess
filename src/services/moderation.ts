@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getTodayPostedCount, checkDbRateLimit } from "../db/schema.js";
+import { checkDbRateLimit } from "../db/schema.js";
 
 // SARA, extreme toxicity, or prohibited contact vectors
 const BLACKLISTED_WORDS = [
@@ -48,17 +48,7 @@ export async function moderateContent(content: string): Promise<ModerationResult
     return { passed: false, flagReason: "Pesan terlalu panjang (maksimal 800 karakter)", isHardReject: true };
   }
 
-  // 2. Check Meta Daily Post Limit (25 posts per 24 hours)
-  const currentCount = await getTodayPostedCount();
-  if (currentCount >= 25) {
-    return {
-      passed: false,
-      flagReason: "Kuota 25 postingan harian Instagram telah penuh. Menfess masuk antrean review.",
-      isHardReject: false,
-    };
-  }
-
-  // 3. Check Phone Numbers (Doxxing / Open BO / Scam prevention)
+  // 2. Check Phone Numbers (Doxxing / Open BO / Scam prevention)
   // Non-global regex test to prevent regex state leaks across calls
   const phonePattern = /(\+62|62|08)[0-9\- ]{8,15}/;
   if (phonePattern.test(trimmed)) {
@@ -69,7 +59,7 @@ export async function moderateContent(content: string): Promise<ModerationResult
     };
   }
 
-  // 4. Check External Links
+  // 3. Check External Links
   const linkPattern = /(https?:\/\/|wa\.me|t\.me|bit\.ly)/i;
   if (linkPattern.test(trimmed)) {
     return {
@@ -79,7 +69,7 @@ export async function moderateContent(content: string): Promise<ModerationResult
     };
   }
 
-  // 5. Check Blacklisted Words
+  // 4. Check Blacklisted Words
   const lowerContent = trimmed.toLowerCase();
   for (const word of BLACKLISTED_WORDS) {
     if (lowerContent.includes(word)) {

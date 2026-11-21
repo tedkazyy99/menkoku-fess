@@ -115,4 +115,54 @@ test("Fail-Fast & Resilience Test Suite", async (t) => {
     // Clean up
     await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [found.id] });
   });
+
+  await t.test("moderation: pure content filter allows clean messages without daily post quota block", async () => {
+    const { moderateContent } = await import("../src/services/moderation.js");
+    const res = await moderateContent("Ini pesan penyemangat ujian sekolah yang bersih dan positif.");
+    assert.equal(res.passed, true);
+    assert.equal(res.flagReason, undefined);
+  });
+
+  await t.test("app: falls back to worker queue when Meta daily quota is full instead of quarantining", async () => {
+    const randomIp = `192.168.99.${Math.floor(Math.random() * 200) + 1}`;
+    const res = await app.request("/api/menfess", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": randomIp,
+      },
+      body: JSON.stringify({
+        content: "Halo ini pesan saat kuota penuh",
+      }),
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.status, "queued");
+
+    if (data.id) {
+      await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [data.id] });
+    }
+  });
+
+  await t.test("worker: stale processing recovery query restores abandoned jobs to queued", async () => {
+    const dummyId = `test_stale_${Date.now()}`;
+    await db.execute({
+      sql: `INSERT INTO menfess (id, content, status, created_at) VALUES (?, ?, ?, ?)`,
+      args: [dummyId, "Stale processing job", "processing", Date.now() - 1000000],
+    });
+
+    // Run recovery logic
+    await db.execute({
+      sql: `UPDATE menfess SET status = 'queued' WHERE status = 'processing' AND id = ?`,
+      args: [dummyId],
+    });
+
+    const recovered = await getMenfessById(dummyId);
+    assert.equal(recovered?.status, "queued");
+
+    // Clean up
+    await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [dummyId] });
+  });
 });

@@ -294,7 +294,16 @@ app.post("/api/menfess", async (c) => {
 
       const hasMetaApi = Boolean(process.env.INSTAGRAM_ACCOUNT_ID && process.env.META_ACCESS_TOKEN);
 
-      if (songQuery || allSlideUrls.length > 1 || !hasMetaApi) {
+      // Check Meta 25 posts/24h quota if attempting direct Meta API post
+      let metaQuotaFull = false;
+      if (hasMetaApi && !songQuery && allSlideUrls.length === 1) {
+        const postedToday = await getTodayPostedCount();
+        if (postedToday >= 25) {
+          metaQuotaFull = true;
+        }
+      }
+
+      if (songQuery || allSlideUrls.length > 1 || !hasMetaApi || metaQuotaFull) {
         await updateMenfessStatus(id, "queued", {
           image_url: allSlideUrls[0],
           slides_json: slidesJson,
@@ -309,7 +318,9 @@ app.post("/api/menfess", async (c) => {
           song_query: songQuery,
           message: songQuery
             ? "Menfess berlagu kamu berhasil masuk antrean postingan!"
-            : "Menfess kamu berhasil masuk antrean postingan!",
+            : (metaQuotaFull
+                ? "Menfess masuk antrean postingan worker (kuota Meta harian tercapai)."
+                : "Menfess kamu berhasil masuk antrean postingan!"),
         });
       }
 
@@ -451,8 +462,16 @@ app.post("/api/menfess", async (c) => {
 
     const hasMetaApi = Boolean(process.env.INSTAGRAM_ACCOUNT_ID && process.env.META_ACCESS_TOKEN);
 
-    // If song is requested OR multiple slides present OR Meta Graph API is not configured -> Queue for Python Publisher Worker!
-    if (songQuery || uploadedFiles.length > 0 || !hasMetaApi) {
+    let metaQuotaFull = false;
+    if (hasMetaApi && !songQuery && uploadedFiles.length === 0) {
+      const postedToday = await getTodayPostedCount();
+      if (postedToday >= 25) {
+        metaQuotaFull = true;
+      }
+    }
+
+    // If song is requested OR multiple slides present OR Meta Graph API is not configured OR quota reached -> Queue for Python Publisher Worker!
+    if (songQuery || uploadedFiles.length > 0 || !hasMetaApi || metaQuotaFull) {
       await updateMenfessStatus(id, "queued", {
         image_url: uploadRes.url,
         slides_json: slidesJson,
@@ -467,7 +486,9 @@ app.post("/api/menfess", async (c) => {
         song_query: songQuery,
         message: songQuery
           ? "Menfess berlagu kamu berhasil masuk antrean postingan!"
-          : "Menfess kamu berhasil masuk antrean postingan!",
+          : (metaQuotaFull
+              ? "Menfess masuk antrean postingan worker (kuota Meta harian tercapai)."
+              : "Menfess kamu berhasil masuk antrean postingan!"),
       });
     }
 
