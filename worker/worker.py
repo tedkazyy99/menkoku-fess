@@ -4,7 +4,8 @@ import json
 import random
 from pathlib import Path
 from dotenv import load_dotenv
-import requests
+import psycopg
+from psycopg.rows import dict_row
 
 from poster import publish_menfess_with_music
 
@@ -13,154 +14,144 @@ ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / ".env")
 load_dotenv(Path(__file__).parent / ".env")
 
-TURSO_URL = os.getenv("TURSO_DATABASE_URL", "").replace("libsql://", "https://")
-TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
-def execute_turso_sql(sql: str, args: list = None) -> list:
-    """Eksekusi query SQL ke Turso via HTTP Pipeline (Nol dependencies C++)."""
-    if not TURSO_URL or not TURSO_TOKEN:
-        return []
+if not DATABASE_URL:
+    raise RuntimeError("[Config Error] DATABASE_URL tidak ditemukan di .env!")
 
-    pipeline_url = f"{TURSO_URL}/v2/pipeline"
-    headers = {
-        "Authorization": f"Bearer {TURSO_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    
-    formatted_args = []
-    for arg in (args or []):
-        if arg is None:
-            formatted_args.append({"type": "null"})
-        elif isinstance(arg, int):
-            formatted_args.append({"type": "integer", "value": str(arg)})
-        elif isinstance(arg, float):
-            formatted_args.append({"type": "float", "value": arg})
-        else:
-            formatted_args.append({"type": "text", "value": str(arg)})
+def claim_next_job():
+    """
+    Klaim job tertua secara atomik menggunakan FOR UPDATE SKIP LOCKED.
+    Menjamin tidak ada race condition dan tidak ada duplicate posting antar worker.
+    """
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE menfess
+                SET status = 'processing'
+                WHERE id = (
+                    SELECT id FROM menfess
+                    WHERE status = 'queued'
+                    ORDER BY created_at ASC
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                )
+                RETURNING id, content, image_url, song_query, slides_json, flag_reason;
+            """)
+            job = cur.fetchone()
+            conn.commit()
+            return job
 
-    payload = {
-        "requests": [
-            {
-                "type": "execute",
-                "stmt": {
-                    "sql": sql,
-                    "args": formatted_args,
-                },
-            },
-            {"type": "close"},
-        ]
-    }
+def mark_job_posted(item_id: str, media_id: str, permalink: str):
+    """Update status job menjadi 'posted'."""
+    now = int(time.time() * 1000)
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE menfess
+                SET status = 'posted', ig_media_id = %s, ig_permalink = %s, posted_at = %s
+                WHERE id = %s
+            """, (media_id, permalink, now, item_id))
+            conn.commit()
 
-    try:
-        resp = requests.post(pipeline_url, headers=headers, json=payload, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        results = data.get("results", [])
-        if results and "response" in results[0]:
-            result_obj = results[0]["response"].get("result", {})
-            rows = result_obj.get("rows", [])
-            cols = [c["name"] for c in result_obj.get("cols", [])]
-            parsed_rows = []
-            for r in rows:
-                row_dict = {}
-                for idx, col in enumerate(cols):
-                    val = r[idx].get("value")
-                    row_dict[col] = val
-                parsed_rows.append(row_dict)
-            return parsed_rows
-    except Exception as e:
-        print(f"[Turso Error] {e}")
-    return []
+def mark_job_failed(item_id: str, error_msg: str):
+    """Tandai status job sebagai 'failed' untuk mencegah looping tanpa henti."""
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE menfess
+                SET status = 'failed', flag_reason = %s
+                WHERE id = %s
+            """, (error_msg[:250], item_id))
+            conn.commit()
 
 def run_worker():
+    safe_db_info = DATABASE_URL.split("@")[-1] if "@" in DATABASE_URL else "configured"
     print("=" * 60)
-    print("  MENFESSKAN - PYTHON QUEUE PUBLISHER WORKER")
+    print("  MENFESSKAN - PYTHON QUEUE PUBLISHER WORKER (POSTGRESQL)")
     print("=" * 60)
-    print("[i] Worker aktif. Menunggu pesan berstatus 'queued'...")
+    print(f"[i] Worker aktif. Terhubung ke PostgreSQL: {safe_db_info}")
+    print("[i] Menunggu pesan berstatus 'queued'...")
 
     while True:
         try:
-            # 1. Ambil pesan antrean terlama
-            rows = execute_turso_sql(
-                "SELECT * FROM menfess WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1"
+            item = claim_next_job()
+
+            if not item:
+                # Antrean kosong, polling setiap 10 detik
+                time.sleep(10)
+                continue
+
+            item_id = item["id"]
+            content = item.get("content", "")
+            image_url = item.get("image_url")
+            song_query = item.get("song_query")
+            slides_json = item.get("slides_json")
+            flag_reason = item.get("flag_reason")
+
+            print(f"\n[+] Mengunci atomik & memproses antrean menfess ID: {item_id}")
+            print(f"    Konten : \"{content[:60]}...\"")
+
+            # Parse daftar gambar slide
+            images = []
+            if slides_json:
+                try:
+                    parsed = json.loads(slides_json)
+                    if isinstance(parsed, list):
+                        images = [str(u) for u in parsed if u]
+                except Exception as e:
+                    print(f"[!] Gagal parse slides_json: {e}")
+
+            if not images and image_url:
+                images = [image_url]
+
+            # Tentukan musik yang diminta
+            music_query = (song_query or "").strip() or None
+            if not music_query and flag_reason and flag_reason.startswith("MUSIC:"):
+                music_query = flag_reason.replace("MUSIC:", "").strip()
+
+            print(f"    Total Slide: {len(images)}")
+            if music_query:
+                print(f"    Request Lagu: {music_query}")
+
+            # Buat caption
+            music_line = f"🎵 Lagu: {music_query}\n" if music_query else ""
+            caption = (
+                f"[Menfesskan #{item_id[:8]}]\n\n"
+                f"\"{content}\"\n\n"
+                f"{music_line}"
+                f"---\n"
+                f"Kirim menfess anonim via link di bio!\n"
+                f"#menfesskan #menfess #songfess #tembayo"
             )
 
-            if rows:
-                item = rows[0]
-                item_id = item["id"]
-                content = item.get("content", "")
-                image_url = item.get("image_url")
-                song_query = item.get("song_query")
-                slides_json = item.get("slides_json")
-                flag_reason = item.get("flag_reason")
-
-                print(f"\n[+] Memproses antrean menfess ID: {item_id}")
-                print(f"    Konten : \"{content[:60]}...\"")
-
-                # Parse daftar gambar slide
-                images = []
-                if slides_json:
-                    try:
-                        parsed = json.loads(slides_json)
-                        if isinstance(parsed, list):
-                            images = [str(u) for u in parsed if u]
-                    except Exception as e:
-                        print(f"[!] Gagal parse slides_json: {e}")
-
-                if not images and image_url:
-                    images = [image_url]
-
-                # Tentukan musik yang diminta
-                music_query = (song_query or "").strip() or None
-                if not music_query and flag_reason and flag_reason.startswith("MUSIC:"):
-                    music_query = flag_reason.replace("MUSIC:", "").strip()
-
-                print(f"    Total Slide: {len(images)}")
-                if music_query:
-                    print(f"    Request Lagu: {music_query}")
-
-                # Buat caption
-                music_line = f"🎵 Lagu: {music_query}\n" if music_query else ""
-                caption = (
-                    f"[Menfesskan #{item_id[:8]}]\n\n"
-                    f"\"{content}\"\n\n"
-                    f"{music_line}"
-                    f"---\n"
-                    f"Kirim menfess anonim via link di bio!\n"
-                    f"#menfesskan #menfess #songfess #tembayo"
-                )
-
-                # 2. Posting ke Instagram via instagrapi
+            try:
+                # Posting ke Instagram via instagrapi
                 res = publish_menfess_with_music(
                     images=images,
                     caption=caption,
                     music_query=music_query,
                 )
 
-                # 3. Update status di DB menjadi 'posted'
-                now = int(time.time() * 1000)
-                execute_turso_sql(
-                    "UPDATE menfess SET status = 'posted', ig_media_id = ?, ig_permalink = ?, posted_at = ? WHERE id = ?",
-                    [res["media_id"], res["url"], now, item_id],
-                )
-                print(f"[OK] Sukses update status ID {item_id} -> posted.")
+                mark_job_posted(item_id, res["media_id"], res["url"])
+                print(f"[OK] Sukses posting & update status ID {item_id} -> posted.")
 
-                # 4. Human Delay: Istirahat acak 45 - 90 detik antar postingan
+                # Human Delay: Istirahat acak 45 - 90 detik antar postingan
                 sleep_time = random.randint(45, 90)
                 print(f"[Cooldown] Istirahat {sleep_time} detik untuk mensimulasikan jeda manusia...")
                 time.sleep(sleep_time)
 
-            else:
-                # Jika antrean kosong, polling setiap 10 detik
-                time.sleep(10)
+            except Exception as post_err:
+                err_msg = str(post_err)[:250]
+                print(f"[!] Gagal posting Instagram ID {item_id}: {err_msg}")
+                mark_job_failed(item_id, f"Gagal posting: {err_msg}")
 
         except KeyboardInterrupt:
             print("\n[i] Worker dihentikan oleh user.")
             break
         except Exception as e:
             print(f"[Worker Error] {e}")
-            time.sleep(15)
+            time.sleep(10)
 
 if __name__ == "__main__":
     run_worker()
-

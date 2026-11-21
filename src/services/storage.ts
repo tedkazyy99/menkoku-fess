@@ -1,4 +1,7 @@
 import crypto from "crypto";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export async function uploadImageToCloud(
   buffer: Buffer,
@@ -8,16 +11,10 @@ export async function uploadImageToCloud(
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-  // Fallback mode for development/testing if Cloudinary credentials are not set
   if (!cloudName || !apiKey || !apiSecret) {
-    console.warn(
-      "[Storage] Cloudinary credentials missing. Using placeholder/mock image URL for dev."
+    throw new Error(
+      "[Storage] Cloudinary credentials missing! Harap konfigurasi CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, dan CLOUDINARY_API_SECRET di .env"
     );
-    // Return a mock placeholder URL or data URL
-    return {
-      url: `https://placehold.co/1080x1080/09090b/ffffff.png?text=Menfess+${filename}`,
-      publicId: `dev_${filename}`,
-    };
   }
 
   const timestamp = Math.round(Date.now() / 1000);

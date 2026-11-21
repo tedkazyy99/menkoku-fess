@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+
+dotenv.config();
+
 export interface InstagramPublishResult {
   mediaId: string;
   permalink: string;
@@ -12,16 +16,10 @@ export async function publishToInstagram(options: {
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
 
-  // Development / Mock fallback if credentials not yet configured
   if (!accountId || !accessToken) {
-    console.warn(
-      "[Instagram] Meta credentials missing. Simulating successful publish for dev."
+    throw new Error(
+      "[Instagram] Meta credentials missing! INSTAGRAM_ACCOUNT_ID dan META_ACCESS_TOKEN wajib dikonfigurasi di .env untuk publish langsung."
     );
-    const mockId = "mock_ig_" + Date.now();
-    return {
-      mediaId: mockId,
-      permalink: `https://www.instagram.com/p/${mockId}/`,
-    };
   }
 
   // Step 1: Create media container
@@ -103,9 +101,12 @@ export async function publishToInstagram(options: {
 export async function deleteFromInstagram(mediaId: string): Promise<boolean> {
   const accessToken = process.env.META_ACCESS_TOKEN;
 
-  if (!accessToken || mediaId.startsWith("mock_")) {
-    console.log(`[Instagram] Deleted mock media: ${mediaId}`);
-    return true;
+  if (!accessToken) {
+    throw new Error("[Instagram] Meta credentials missing! META_ACCESS_TOKEN wajib dikonfigurasi.");
+  }
+
+  if (mediaId.startsWith("mock_")) {
+    throw new Error(`[Instagram] Cannot delete simulated mock media ID: ${mediaId}`);
   }
 
   const deleteUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/${mediaId}?access_token=${accessToken}`;

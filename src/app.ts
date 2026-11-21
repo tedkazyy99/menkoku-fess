@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import crypto from "crypto";
@@ -178,16 +181,6 @@ app.post("/api/menfess", async (c) => {
   };
   await insertMenfess(initialRecord);
 
-  // If content was flagged by moderation rules
-  if (!modResult.passed) {
-    return c.json({
-      success: true,
-      status: "flagged",
-      flagReason: modResult.flagReason,
-      message: "Menfess masuk antrean karantina admin.",
-    });
-  }
-
   try {
     // 1. Generate Slide 1 Image Card
     const imageBuffer = await generateMenfessImage({ content, id });
@@ -212,8 +205,27 @@ app.post("/api/menfess", async (c) => {
 
     const slidesJson = JSON.stringify(allSlideUrls);
 
-    // If song is requested OR multiple slides present -> Queue for Python Publisher Worker!
-    if (songQuery || uploadedFiles.length > 0) {
+    // If content was flagged by moderation rules, preserve assets and hold for admin review
+    if (!modResult.passed) {
+      await updateMenfessStatus(id, "flagged", {
+        image_url: uploadRes.url,
+        slides_json: slidesJson,
+        song_query: songQuery,
+      });
+
+      return c.json({
+        success: true,
+        id,
+        status: "flagged",
+        flagReason: modResult.flagReason,
+        message: "Menfess masuk antrean karantina admin.",
+      });
+    }
+
+    const hasMetaApi = Boolean(process.env.INSTAGRAM_ACCOUNT_ID && process.env.META_ACCESS_TOKEN);
+
+    // If song is requested OR multiple slides present OR Meta Graph API is not configured -> Queue for Python Publisher Worker!
+    if (songQuery || uploadedFiles.length > 0 || !hasMetaApi) {
       await updateMenfessStatus(id, "queued", {
         image_url: uploadRes.url,
         slides_json: slidesJson,
@@ -226,11 +238,13 @@ app.post("/api/menfess", async (c) => {
         status: "queued",
         slidesCount: allSlideUrls.length,
         song_query: songQuery,
-        message: "Menfess berlagu kamu berhasil masuk antrean postingan!",
+        message: songQuery
+          ? "Menfess berlagu kamu berhasil masuk antrean postingan!"
+          : "Menfess kamu berhasil masuk antrean postingan!",
       });
     }
 
-    // Single text card without song -> Post directly to Meta Graph API
+    // Single text card without song AND Meta credentials configured -> Post directly to Meta Graph API
     const caption = `[Menfesskan #${id.slice(0, 8)}]\n\n"${content}"\n\n---\nKirim pesan anonim via link di bio!\n#menfesskan #menfess`;
     const igRes = await publishToInstagram({
       imageUrl: uploadRes.url,
@@ -256,11 +270,13 @@ app.post("/api/menfess", async (c) => {
       flag_reason: `Gagal memproses menfess: ${err.message}`,
     });
 
-    return c.json({
-      success: true,
-      status: "flagged",
-      flagReason: `Gagal memproses menfess (${err.message}). Tersimpan di antrean admin.`,
-    });
+    return c.json(
+      {
+        success: false,
+        error: `Gagal memproses pengiriman: ${err.message}`,
+      },
+      500
+    );
   }
 });
 
@@ -311,10 +327,37 @@ app.post("/api/admin/menfess/:id/approve", async (c) => {
 
   try {
     let imageUrl = record.image_url;
+    let slidesJson = record.slides_json;
+
     if (!imageUrl) {
       const buffer = await generateMenfessImage({ content: record.content, id });
-      const upload = await uploadImageToCloud(buffer, `menfess_${id}`);
+      const upload = await uploadImageToCloud(buffer, `menfess_${id}_slide1`);
       imageUrl = upload.url;
+      slidesJson = JSON.stringify([imageUrl]);
+    }
+
+    const hasMetaApi = Boolean(process.env.INSTAGRAM_ACCOUNT_ID && process.env.META_ACCESS_TOKEN);
+    let slideCount = 1;
+    if (slidesJson) {
+      try {
+        const parsed = JSON.parse(slidesJson);
+        if (Array.isArray(parsed)) slideCount = parsed.length;
+      } catch {}
+    }
+    const hasSongOrSlides = Boolean(record.song_query || slideCount > 1);
+
+    // If request contains song, multiple slides, or Meta API is not configured -> Queue for worker!
+    if (hasSongOrSlides || !hasMetaApi) {
+      await updateMenfessStatus(id, "queued", {
+        image_url: imageUrl,
+        slides_json: slidesJson,
+      });
+
+      return c.json({
+        success: true,
+        status: "queued",
+        message: "Menfess disetujui dan diteruskan ke antrean postingan worker.",
+      });
     }
 
     const caption = `[Menfesskan #${id.slice(0, 8)}]\n\n"${record.content}"\n\n---\nKirim pesan anonim via link di bio!\n#menfesskan #menfess`;
@@ -322,6 +365,7 @@ app.post("/api/admin/menfess/:id/approve", async (c) => {
 
     await updateMenfessStatus(id, "posted", {
       image_url: imageUrl,
+      slides_json: slidesJson,
       ig_media_id: igRes.mediaId,
       ig_permalink: igRes.permalink,
       posted_at: Date.now(),

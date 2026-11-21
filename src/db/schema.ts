@@ -3,7 +3,7 @@ import { db } from "./client.js";
 export interface MenfessRecord {
   id: string;
   content: string;
-  status: "pending" | "posted" | "flagged" | "rejected" | "deleted" | "queued";
+  status: "pending" | "posted" | "flagged" | "rejected" | "deleted" | "queued" | "processing" | "failed";
   image_url: string | null;
   ig_media_id: string | null;
   ig_permalink: string | null;
@@ -26,17 +26,17 @@ export async function initDb(): Promise<void> {
       flag_reason TEXT,
       song_query TEXT,
       slides_json TEXT,
-      created_at INTEGER NOT NULL,
-      posted_at INTEGER
+      created_at BIGINT NOT NULL,
+      posted_at BIGINT
     );
   `);
 
   // Migrasi aman untuk database yang sudah jalan
   try {
-    await db.execute(`ALTER TABLE menfess ADD COLUMN song_query TEXT;`);
+    await db.execute(`ALTER TABLE menfess ADD COLUMN IF NOT EXISTS song_query TEXT;`);
   } catch {}
   try {
-    await db.execute(`ALTER TABLE menfess ADD COLUMN slides_json TEXT;`);
+    await db.execute(`ALTER TABLE menfess ADD COLUMN IF NOT EXISTS slides_json TEXT;`);
   } catch {}
 
   await db.execute(`
@@ -50,7 +50,7 @@ export async function initDb(): Promise<void> {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS rate_limits (
       ip_hash TEXT PRIMARY KEY,
-      last_seen INTEGER NOT NULL
+      last_seen BIGINT NOT NULL
     );
   `);
 }

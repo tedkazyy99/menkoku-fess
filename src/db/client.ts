@@ -1,53 +1,86 @@
-import { createClient, type Client, type InStatement, type ResultSet } from "@libsql/client/web";
+import pg from "pg";
 import dotenv from "dotenv";
-import { memoryDb } from "./memory.js";
 
 dotenv.config();
 
-const url = process.env.TURSO_DATABASE_URL;
-const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
+const dbUrl = process.env.DATABASE_URL;
+
+export interface ResultSet {
+  columns: string[];
+  columnTypes: string[];
+  rows: any[];
+  rowsAffected: number;
+  lastInsertRowid: undefined;
+  toJSON(): any;
+}
+
+export type InStatement = string | { sql: string; args?: any[] };
 
 export interface DbExecutor {
   execute(stmt: InStatement): Promise<ResultSet>;
 }
 
-class ResilientDb implements DbExecutor {
-  private tursoClient?: Client;
+class PgDb implements DbExecutor {
+  private pool: pg.Pool;
 
-  constructor() {
-    if (url && (url.startsWith("libsql:") || url.startsWith("https:") || url.startsWith("http:"))) {
-      try {
-        this.tursoClient = createClient({
-          url,
-          authToken,
-        });
-      } catch (e) {
-        console.warn("[Database] Gagal inisialisasi Turso, fallback ke memory store:", e);
-      }
-    } else {
-      console.warn("[Database] TURSO_DATABASE_URL belum diatur. Menggunakan memory store.");
-    }
+  constructor(connectionString: string) {
+    this.pool = new pg.Pool({
+      connectionString,
+      ssl: false,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+
+    this.pool.on("error", (err) => {
+      console.error("[PostgreSQL Pool Error]", err);
+    });
   }
 
   async execute(stmt: InStatement): Promise<ResultSet> {
-    if (this.tursoClient) {
-      try {
-        return await this.tursoClient.execute(stmt);
-      } catch (err: any) {
-        // Abaikan error duplicate column saat migrasi
-        if (err.message && err.message.includes("duplicate column")) {
-          throw err;
-        }
+    const rawSql = typeof stmt === "string" ? stmt : stmt.sql;
+    const rawArgs = typeof stmt === "string" ? [] : (stmt.args || []);
 
-        console.error(
-          "[Database] Turso query error (401 / jaringan). Otomatis fallback ke memory store:",
-          err.message
-        );
-        return await memoryDb.execute(stmt);
+    // Convert SQLite '?' parameter markers to PostgreSQL '$1, $2, ...'
+    let paramIdx = 0;
+    const pgSql = rawSql.replace(/\?/g, () => `$${++paramIdx}`);
+
+    try {
+      const res = await this.pool.query(pgSql, rawArgs);
+      const cols = res.fields ? res.fields.map((f) => f.name) : [];
+      return {
+        columns: cols,
+        columnTypes: cols.map(() => "text"),
+        rows: res.rows || [],
+        rowsAffected: res.rowCount || 0,
+        lastInsertRowid: undefined,
+        toJSON: () => ({ columns: cols, rows: res.rows }),
+      };
+    } catch (err: any) {
+      if (err.message && (err.message.includes("already exists") || err.message.includes("duplicate column"))) {
+        return {
+          columns: [],
+          columnTypes: [],
+          rows: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+          toJSON: () => ({}),
+        };
       }
+      console.error("[Database] PostgreSQL query error:", err.message);
+      throw err;
     }
-    return await memoryDb.execute(stmt);
   }
 }
 
-export const db: DbExecutor = new ResilientDb();
+function createDbExecutor(): DbExecutor {
+  if (dbUrl && (dbUrl.startsWith("postgres://") || dbUrl.startsWith("postgresql://"))) {
+    return new PgDb(dbUrl);
+  }
+
+  throw new Error(
+    "[Database] DATABASE_URL (PostgreSQL) belum diatur di .env! Harap konfigurasi DATABASE_URL."
+  );
+}
+
+export const db: DbExecutor = createDbExecutor();

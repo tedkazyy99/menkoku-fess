@@ -47,6 +47,7 @@ def publish_menfess_with_music(
 ) -> dict:
     """
     Publish multiple slides (carousel) or single photo with official Instagram music.
+    Strict music validation: raises error if requested song is not found.
     """
     cl = get_client()
     local_paths = download_images(images)
@@ -55,17 +56,24 @@ def publish_menfess_with_music(
         raise ValueError("Daftar gambar tidak boleh kosong.")
 
     track = None
+    confirmed_track_info = None
+
     if music_query:
         print(f"[Musik] Mencari lagu di katalog Instagram: '{music_query}'...")
         try:
             results = cl.search_music(music_query)
             if results:
                 track = results[0]
-                print(f"[Musik] Lagu ditemukan: '{track.title}' oleh '{track.display_artist}' (ID: {track.id})")
+                confirmed_track_info = {
+                    "id": str(track.id),
+                    "title": track.title,
+                    "artist": track.display_artist,
+                }
+                print(f"[Musik] Lagu terkonfirmasi: '{track.title}' oleh '{track.display_artist}' (ID: {track.id})")
             else:
-                print(f"[Musik] Tidak ditemukan lagu untuk '{music_query}', lanjut tanpa musik.")
+                raise ValueError(f"Lagu tidak ditemukan di katalog Instagram: '{music_query}'")
         except Exception as e:
-            print(f"[!] Gagal mencari musik: {e}, lanjut tanpa musik.")
+            raise RuntimeError(f"Gagal verifikasi musik '{music_query}': {e}")
 
     is_multiple = len(local_paths) > 1
 
@@ -103,6 +111,5 @@ def publish_menfess_with_music(
         "media_id": str(media.id),
         "code": media.code,
         "url": post_url,
-        "track_name": f"{track.title} - {track.display_artist}" if track else None,
+        "track": confirmed_track_info,
     }
-
