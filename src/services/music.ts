@@ -11,7 +11,35 @@ interface CacheEntry {
 }
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache
+export const MAX_CACHE_ENTRIES = 500;
 const memoryCache = new Map<string, CacheEntry>();
+
+export function pruneMusicCache(now: number = Date.now()): void {
+  // Prune expired entries
+  for (const [key, entry] of memoryCache.entries()) {
+    if (now - entry.timestamp >= CACHE_TTL_MS) {
+      memoryCache.delete(key);
+    }
+  }
+
+  // If still above maximum size, evict oldest entries (FIFO / LRU style)
+  while (memoryCache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = memoryCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      memoryCache.delete(oldestKey);
+    } else {
+      break;
+    }
+  }
+}
+
+export function getMusicCacheSize(): number {
+  return memoryCache.size;
+}
+
+export function clearMusicCache(): void {
+  memoryCache.clear();
+}
 
 export async function searchMusic(query: string): Promise<SongTrack[]> {
   const cleanQuery = query.trim().toLowerCase();
@@ -22,8 +50,11 @@ export async function searchMusic(query: string): Promise<SongTrack[]> {
   // Check in-memory cache
   const cached = memoryCache.get(cleanQuery);
   const now = Date.now();
-  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
-    return cached.data;
+  if (cached) {
+    if (now - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+    memoryCache.delete(cleanQuery);
   }
 
   const endpoint = `https://itunes.apple.com/search?term=${encodeURIComponent(cleanQuery)}&entity=song&limit=5&country=ID`;
@@ -66,7 +97,11 @@ export async function searchMusic(query: string): Promise<SongTrack[]> {
         };
       });
 
-    // Save to cache
+    // Save to cache with bounded size check
+    if (memoryCache.size >= MAX_CACHE_ENTRIES) {
+      pruneMusicCache(now);
+    }
+
     memoryCache.set(cleanQuery, {
       timestamp: now,
       data: results,

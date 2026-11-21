@@ -52,5 +52,18 @@ test("Music Autocomplete & Search Test Suite", async (t) => {
     // Cached response should be virtually instantaneous
     assert.ok(dur2 < dur1 || dur2 < 50, `Second response (${dur2}ms) should be fast cache hit`);
   });
+
+  await t.test("prunes expired cache entries and bounds maximum size", async () => {
+    const { pruneMusicCache, getMusicCacheSize, clearMusicCache } = await import("../src/services/music.js");
+    clearMusicCache();
+
+    // Trigger one search to populate cache
+    await app.request("/api/music/search?q=tulus");
+    assert.ok(getMusicCacheSize() > 0);
+
+    // Prune with a future timestamp (e.g. 20 minutes ahead)
+    pruneMusicCache(Date.now() + 20 * 60 * 1000);
+    assert.equal(getMusicCacheSize(), 0, "Expired entries must be evicted");
+  });
 });
 

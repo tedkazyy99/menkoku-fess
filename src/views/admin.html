@@ -76,8 +76,10 @@ button:disabled {
     <!-- Filter Tabs -->
     <nav class="tab-row" aria-label="Filter Status">
       <button onclick="setFilter('')" class="tab-btn" data-filter="" data-active="true">Semua</button>
+      <button onclick="setFilter('queued')" class="tab-btn" data-filter="queued">Antrean</button>
       <button onclick="setFilter('flagged')" class="tab-btn" data-filter="flagged">Karantina</button>
       <button onclick="setFilter('posted')" class="tab-btn" data-filter="posted">Terbit</button>
+      <button onclick="setFilter('failed')" class="tab-btn" data-filter="failed">Gagal</button>
       <button onclick="setFilter('rejected')" class="tab-btn" data-filter="rejected">Ditolak</button>
     </nav>
 
@@ -172,6 +174,8 @@ button:disabled {
         let badgeMod = 'status-badge--posted';
         if (r.status === 'flagged') badgeMod = 'status-badge--flagged';
         if (r.status === 'rejected') badgeMod = 'status-badge--rejected';
+        if (r.status === 'queued' || r.status === 'processing') badgeMod = 'status-badge--queued';
+        if (r.status === 'failed') badgeMod = 'status-badge--failed';
 
         const date = new Date(r.created_at).toLocaleString('id-ID');
 
@@ -209,6 +213,12 @@ button:disabled {
                   </button>
                   <button onclick="rejectMenfess('${r.id}')" class="admin-btn admin-btn--danger">
                     Tolak
+                  </button>
+                ` : ''}
+
+                ${r.status === 'failed' ? `
+                  <button onclick="retryMenfess('${r.id}')" class="admin-btn admin-btn--success">
+                    Coba Lagi
                   </button>
                 ` : ''}
 
@@ -259,6 +269,25 @@ button:disabled {
         loadData();
       } catch (e) {
         alert('Gagal menolak menfess.');
+      }
+    }
+
+    async function retryMenfess(id) {
+      if (!confirm('Masukkan kembali menfess ini ke antrean worker?')) return;
+      try {
+        const res = await fetch(`/api/admin/menfess/${id}/retry`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Menfess berhasil dikembalikan ke antrean.');
+          loadData();
+        } else {
+          alert(data.error || 'Gagal retry.');
+        }
+      } catch (e) {
+        alert('Gagal menghubungi server.');
       }
     }
 

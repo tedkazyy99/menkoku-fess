@@ -21,23 +21,33 @@ def download_images(image_sources: list) -> list:
     local_paths = []
     temp_dir = Path(tempfile.gettempdir()) / "menfess_slides"
     temp_dir.mkdir(parents=True, exist_ok=True)
+    batch_id = f"{os.getpid()}_{int(time.time() * 1000)}"
 
-    for i, src in enumerate(image_sources):
-        src_str = str(src).strip()
-        if src_str.startswith("http://") or src_str.startswith("https://"):
-            local_file = temp_dir / f"slide_{i}_{os.getpid()}.jpg"
-            resp = requests.get(src_str, timeout=30)
-            resp.raise_for_status()
-            with open(local_file, "wb") as f:
-                f.write(resp.content)
-            local_paths.append(local_file)
-        else:
-            p = Path(src_str)
-            if not p.exists():
-                raise FileNotFoundError(f"File gambar tidak ditemukan: {src_str}")
-            local_paths.append(p)
-
-    return local_paths
+    try:
+        for i, src in enumerate(image_sources):
+            src_str = str(src).strip()
+            if src_str.startswith("http://") or src_str.startswith("https://"):
+                local_file = temp_dir / f"slide_{i}_{batch_id}.jpg"
+                resp = requests.get(src_str, timeout=30)
+                resp.raise_for_status()
+                with open(local_file, "wb") as f:
+                    f.write(resp.content)
+                local_paths.append(local_file)
+            else:
+                p = Path(src_str)
+                if not p.exists():
+                    raise FileNotFoundError(f"File gambar tidak ditemukan: {src_str}")
+                local_paths.append(p)
+        return local_paths
+    except Exception:
+        # Clean up partially downloaded files in case of network/read failure
+        for p in local_paths:
+            try:
+                if p.exists() and p.parent == temp_dir:
+                    p.unlink()
+            except Exception:
+                pass
+        raise
 
 def publish_menfess_with_music(
     images: list,
@@ -116,9 +126,10 @@ def publish_menfess_with_music(
             "track": confirmed_track_info,
         }
     finally:
+        temp_dir = Path(tempfile.gettempdir()) / "menfess_slides"
         for p in local_paths:
             try:
-                if p.exists():
+                if p.exists() and p.parent == temp_dir:
                     p.unlink()
             except Exception as e:
                 print(f"[Cleanup Warning] Gagal menghapus {p}: {e}")

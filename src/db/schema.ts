@@ -175,8 +175,12 @@ export async function getMenfessList(limit = 50, status?: string): Promise<Menfe
   const args: any[] = [];
 
   if (status) {
-    query += " WHERE status = ?";
-    args.push(status);
+    if (status === "queued") {
+      query += " WHERE status IN ('queued', 'processing')";
+    } else {
+      query += " WHERE status = ?";
+      args.push(status);
+    }
   }
 
   query += " ORDER BY created_at DESC LIMIT ?";

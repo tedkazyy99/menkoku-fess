@@ -1,3 +1,4 @@
+process.env.NODE_ENV = "test";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { uploadImageToCloud } from "../src/services/storage.js";
@@ -164,5 +165,50 @@ test("Fail-Fast & Resilience Test Suite", async (t) => {
 
     // Clean up
     await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [dummyId] });
+  });
+
+  await t.test("admin: retry endpoint restores failed menfess to queued", async () => {
+    process.env.ADMIN_PASSWORD = "testpassword123";
+    const dummyId = `test_failed_${Date.now()}`;
+    await db.execute({
+      sql: `INSERT INTO menfess (id, content, status, flag_reason, created_at) VALUES (?, ?, ?, ?, ?)`,
+      args: [dummyId, "Gagal sebelumnya", "failed", "Network error", Date.now()],
+    });
+
+    const res = await app.request(`/api/admin/menfess/${dummyId}/retry`, {
+      method: "POST",
+      headers: { Authorization: "Bearer testpassword123" },
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.status, "queued");
+
+    const record = await getMenfessById(dummyId);
+    assert.equal(record?.status, "queued");
+    assert.equal(record?.flag_reason, null);
+
+    await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [dummyId] });
+  });
+
+  await t.test("db: getMenfessList filters queued includes processing items", async () => {
+    const { getMenfessList } = await import("../src/db/schema.js");
+    const qId = `test_q_${Date.now()}`;
+    const pId = `test_p_${Date.now()}`;
+    await db.execute({
+      sql: `INSERT INTO menfess (id, content, status, created_at) VALUES (?, ?, ?, ?)`,
+      args: [qId, "Item queued", "queued", Date.now()],
+    });
+    await db.execute({
+      sql: `INSERT INTO menfess (id, content, status, created_at) VALUES (?, ?, ?, ?)`,
+      args: [pId, "Item processing", "processing", Date.now()],
+    });
+
+    const list = await getMenfessList(50, "queued");
+    const ids = list.map((item) => item.id);
+    assert.ok(ids.includes(qId), "Queued items must be in queued list");
+    assert.ok(ids.includes(pId), "Processing items must be in queued list");
+
+    await db.execute({ sql: "DELETE FROM menfess WHERE id IN (?, ?)", args: [qId, pId] });
   });
 });

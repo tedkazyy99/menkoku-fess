@@ -297,8 +297,16 @@ html, body {
   color: var(--color-accent-2);
 }
 
-.status-badge--rejected {
+.status-badge--queued {
+  color: var(--color-accent-1);
+}
+
+.status-badge--failed {
   color: var(--color-error);
+}
+
+.status-badge--rejected {
+  color: var(--color-ink-2);
 }
 
 .record-content {
