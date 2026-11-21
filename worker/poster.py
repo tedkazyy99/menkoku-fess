@@ -1,4 +1,5 @@
 import os
+import time
 import tempfile
 import requests
 from pathlib import Path
@@ -117,6 +118,11 @@ def publish_menfess_with_music(
 
         post_url = f"https://www.instagram.com/p/{media.code}/"
         print(f"[SUCCESS] Berhasil diposting! Link: {post_url}")
+
+        try:
+            cl.dump_settings(SESSION_FILE)
+        except Exception:
+            pass
 
         return {
             "success": True,
