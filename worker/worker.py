@@ -117,12 +117,12 @@ def run_worker():
             # Buat caption
             music_line = f"🎵 Lagu: {music_query}\n" if music_query else ""
             caption = (
-                f"[Menfesskan #{item_id[:8]}]\n\n"
+                f"[Stembayo Menfess #{item_id[:8]}]\n\n"
                 f"\"{content}\"\n\n"
                 f"{music_line}"
                 f"---\n"
                 f"Kirim menfess anonim via link di bio!\n"
-                f"#menfesskan #menfess #songfess #tembayo"
+                f"#stembayomenfess #menfess #songfess #tembayo"
             )
 
             try:

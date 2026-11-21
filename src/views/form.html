@@ -3,141 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Kirim curhatan atau pesan anonim di Menfesskan, otomatis tayang di feed Instagram.">
-  <title>Menfesskan — Lautan Suara Anonim</title>
+  <meta name="description" content="Kirim curhatan atau pesan anonim di Menfesskan, otomatis disiarkan ke feed Instagram.">
+  <title>Menfesskan: Terminal Suara Anonim</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/page.css">
-</head>
-<body>
-  <!-- Header Bar -->
-  <header class="ocean-header">
-    <div class="header-container">
-      <a href="/" class="brand-badge" aria-label="Beranda Menfesskan">
-        <div class="brand-icon">M</div>
-        <div class="brand-title">Menfesskan<span class="brand-tag">Anonim</span></div>
-      </a>
-      <div class="header-meta">
-        <span class="pulse-dot"></span>
-        <span>Instagram Feed Ready</span>
-      </div>
-    </div>
-  </header>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Chivo:wght@400;700;900&family=Silkscreen:wght@700&display=swap" rel="stylesheet">
+  <style>
+/* Hallmark · shape: Workbench · genre: playful · theme: Arcade (deal 3/3, seed retro-menfess-confession-platform-4983·637d30ec·2026-11-21·r0) · redesign: full
+ * hero: Stage · nav: none · footer: mast · imagery: none · signature: tactile arcade confession station · arcade: ember/grille
+ * axes: dark/pixel/chromatic-ember · posture: full-palette · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, strict tokenized arcade surface */
+@import url("/styles/page.css");
 
+html, body {
+  overflow-x: clip;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+button:active {
+  translate: 2px 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+  </style>
+</head>
+<body class="crt">
   <!-- Main Viewport -->
   <main class="main-wrapper">
+    <!-- Hero Lead -->
     <div class="hero-lead">
-      <h1 class="hero-title">Kirimkan Pesanmu ke Lautan</h1>
+      <h1 class="hero-title">Kirim Pesan ke Feed</h1>
       <p class="hero-subtitle">
-        Sampaikan unek-unek, perasaan, atau lagu favorit secara 100% anonim. Otomatis tayang di feed Instagram.
+        Tulis curhatan, unek-unek, atau kirim lagu favorit tanpa nama di stembayofess. Otomatis diposting ke feed Instagram.
       </p>
     </div>
 
+    <!-- Two-Column Studio Stage -->
     <div class="stage-grid">
-      <!-- Left Column: Form Composer -->
-      <section class="form-panel" aria-label="Formulir Menfess">
+      <!-- Left Column: Transmitter Console -->
+      <section class="transmitter-panel" aria-label="Terminal Kirim Menfess">
         <div class="panel-header">
-          <h2 class="panel-title">Tulis Pesan Anonim</h2>
-          <p class="panel-desc">Identitas, IP, dan riwayat akunmu tidak akan pernah dipublikasikan.</p>
+          <h2 class="panel-title">Stembayo Mention Confession</h2>
+          <span class="panel-secure-badge">P1 READY</span>
         </div>
 
-        <div id="alertBox" class="ocean-alert" hidden role="alert"></div>
+        <div id="alertBox" class="radio-alert" hidden role="alert"></div>
 
         <form id="menfessForm" class="field-group" enctype="multipart/form-data">
-          <!-- 1. Text Confession -->
+          <!-- 1. Dynamic Slide Builder -->
           <div class="field-group">
             <div class="field-header">
-              <label for="content" class="field-label">Pesan Menfess</label>
-              <span id="charCount" class="char-counter">0 / 800</span>
+              <label class="field-label">Slide Postingan IG</label>
+              <span id="slideBadge" class="char-counter">1/5</span>
             </div>
-            <textarea
-              id="content"
-              name="content"
-              rows="5"
-              placeholder="Tulis curhatan, kata-kata yang belum sempat tersampaikan, atau pesan rahasia di sini…"
-              class="ocean-textarea"
-              maxlength="800"
-              required
-            ></textarea>
+
+            <!-- Dynamic Slides Stack Container -->
+            <div id="slidesContainer" class="slides-stack"></div>
+
+            <!-- Add Slide Action Button -->
+            <button type="button" id="addSlideBtn" class="btn-add-slide">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>Tambah Slide</span>
+            </button>
           </div>
 
-          <!-- 2. Songfess (Lagu Pengiring) -->
-          <div class="field-group" style="margin-top: var(--space-sm);">
+          <!-- 2. Songfess (Lagu Pengiring Postingan) -->
+          <div class="field-group">
             <div class="field-header">
-              <label for="songQuery" class="field-label">Lagu Pengiring (Songfess)</label>
-              <span class="char-counter">Instagram Music</span>
+              <label for="songQuery" class="field-label">Musik:</label>
             </div>
-            <div class="input-with-icon">
-              <span class="input-icon">🎵</span>
-              <input
-                type="text"
-                id="songQuery"
-                name="song_query"
-                class="ocean-input"
-                placeholder="Cth: Nadin Amizah - Rayuan Perempuan Gila"
-                maxlength="150"
-              />
-            </div>
-          </div>
-
-          <!-- 3. Photo Attachments -->
-          <div class="field-group" style="margin-top: var(--space-sm);">
-            <div class="field-header">
-              <label for="imageAttachments" class="field-label">Lampiran Foto (Maks 4 Foto)</label>
-              <span id="slideBadge" class="char-counter" style="color: var(--color-seafoam); font-weight: 600;">1 SLIDE (TEKS)</span>
-            </div>
-
-            <div class="dropzone-box" id="dropzoneBox">
-              <input
-                type="file"
-                id="imageAttachments"
-                name="images"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                class="file-input-hidden"
-              />
-              <div class="dropzone-content">
-                <span class="dropzone-icon">📷</span>
-                <span class="dropzone-text">+ Tambah Foto Lampiran</span>
-                <span class="dropzone-hint">JPG, PNG, WebP (Maks 2MB per foto)</span>
+            <div class="song-input-wrapper">
+              <div class="input-with-icon">
+                <svg class="input-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <input
+                  type="text"
+                  id="songQuery"
+                  name="song_query"
+                  class="radio-input"
+                  placeholder="Cari lagu atau ketik artis - judul…"
+                  maxlength="150"
+                  autocomplete="off"
+                />
               </div>
+              <div id="songAutocompleteList" class="song-autocomplete-box" hidden></div>
             </div>
-
-            <div id="previewContainer" class="thumbnail-grid" hidden></div>
+            <!-- Selected Song Album Badge -->
+            <div id="selectedSongBadge" class="selected-song-badge" style="display: none;">
+              <img id="selectedSongImg" class="selected-song-img" alt="Cover Album" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" />
+              <div class="selected-song-meta">
+                <span id="selectedSongTitle" class="selected-song-title"></span>
+                <span id="selectedSongArtist" class="selected-song-artist"></span>
+              </div>
+              <button type="button" id="clearSongBtn" class="selected-song-clear" title="Hapus lagu" aria-label="Hapus lagu">×</button>
+            </div>
           </div>
 
-          <!-- 4. Submit Button -->
-          <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: var(--space-md);">
+          <!-- 3. Submit CTA -->
+          <button type="submit" id="submitBtn" class="btn-broadcast">
             <span id="btnText">Kirim Menfess</span>
           </button>
         </form>
 
-        <!-- Rules Box -->
+        <!-- Rules & Ethics Note -->
         <div class="rules-card">
-          <div class="rules-card-title">Ketentuan Pengiriman:</div>
+          <div class="rules-card-title">Ketentuan Kirim & Keamanan:</div>
           <ul class="rules-list">
-            <li>Dilarang menyertakan nomor telepon / akun pribadi orang lain (anti-doxxing).</li>
-            <li>Bebas ujaran kebencian, SARA, dan kata-kata vulgar terlarang.</li>
-            <li>Pesan lolos kurasi otomatis langsung diproses ke feed Instagram.</li>
+            <li><strong>Anti-Doxxing:</strong> Dilarang mencantumkan nomor telepon, alamat, atau akun pribadi orang lain.</li>
+            <li><strong>Kurasi Otomatis:</strong> Pesan yang lolos filter otomatis langsung dijadwalkan ke Instagram.</li>
+            <li><strong>Takedown Cepat:</strong> Konten merugikan dapat dihapus maksimal 1x24 jam via pesan resmi moderator.</li>
           </ul>
         </div>
       </section>
 
-      <!-- Right Column: Real-Time Live Instagram Card Preview -->
+      <!-- Right Column: Real-Time Live Instagram Monitor -->
       <aside class="preview-sticky" aria-label="Pratinjau Kartu Feed Instagram">
-        <div class="preview-badge-header">
-          <span class="preview-label">Live Instagram Preview</span>
-          <span class="live-indicator"><span class="pulse-dot"></span> Sinkronisasi</span>
+        <div class="preview-bar-header">
+          <span class="preview-label">Monitor feed 1:1</span>
+          <span class="preview-sync-status"><span class="beacon-dot"></span> Sinkronisasi aktif</span>
         </div>
 
         <div class="ig-card-container">
           <!-- Card Header -->
           <div class="ig-card-header">
             <div class="ig-author">
-              <div class="ig-avatar">M</div>
+              <div class="ig-avatar">S</div>
               <div class="ig-title-box">
-                <span class="ig-name">Menfesskan</span>
+                <span class="ig-name">Stembayo Menfess</span>
                 <span class="ig-id" id="liveId">#PREVIEW</span>
               </div>
             </div>
@@ -146,12 +144,17 @@
 
           <!-- Card Body -->
           <div class="ig-body">
-            <div class="ig-quote" id="liveQuote">“Tulis pesanmu di formulir sebelah kiri untuk melihat pratinjau kartu feed…”</div>
+            <div class="ig-quote" id="liveQuote">“Tulis pesanmu di sebelah kiri untuk melihat pratinjau kartu Instagram…”</div>
+            <div class="ig-photo-preview-wrap" id="livePhotoWrap" style="display: none;">
+              <img id="livePhotoImg" class="ig-photo-preview" alt="Pratinjau foto slide" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" style="display: none;" />
+              <div id="livePhotoPlaceholder" class="ig-photo-placeholder" style="display: none;">Pilih foto pada slide untuk melihat pratinjau</div>
+            </div>
           </div>
 
           <!-- Live Music Bar (Muncul bila lagu diisi) -->
           <div class="ig-music-bar" id="liveMusicBar" style="display: none;">
-            <span>🎵</span>
+            <img id="liveMusicThumb" class="ig-music-thumb" alt="Album Cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" style="display: none;" />
+            <svg id="liveMusicIcon" class="ig-music-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             <span class="ig-music-text" id="liveMusicTitle">Lagu</span>
           </div>
 
@@ -161,41 +164,57 @@
             <span class="ig-footer-hint">Kirim pesan via link di bio</span>
           </div>
         </div>
+
+        <!-- Carousel Slide Indicators -->
+        <div class="preview-carousel-meta">
+          <div class="preview-nav-controls">
+            <button type="button" id="prevSlideBtn" class="carousel-nav-btn" aria-label="Slide sebelumnya" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span id="carouselSummary">1/1</span>
+            <button type="button" id="nextSlideBtn" class="carousel-nav-btn" aria-label="Slide berikutnya" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <div class="carousel-dots" id="carouselDots">
+            <span class="carousel-dot active"></span>
+          </div>
+        </div>
       </aside>
     </div>
 
     <!-- Footer -->
-    <footer class="ocean-footer">
-      <span>Anonimitas 100% terjaga. Identitas kamu tidak disimpan.</span>
+    <footer class="radio-footer">
+      <span>100% Bebas Jejak Digital: Identitas, alamat IP, dan riwayat akun tidak pernah disimpan atau dipublikasikan.</span>
       <button type="button" id="openLegalModal" class="legal-btn">
-        Ketentuan Hukum & Takedown
+        Ketentuan & Takedown
       </button>
     </footer>
   </main>
 
   <!-- Legal & Takedown Dialog -->
-  <dialog id="legalModal" class="ocean-modal" aria-labelledby="legalTitle">
+  <dialog id="legalModal" class="radio-modal" aria-labelledby="legalTitle">
     <div class="modal-box">
       <div class="modal-header">
-        <h2 id="legalTitle" class="modal-title">Ketentuan Hukum & Takedown</h2>
+        <h2 id="legalTitle" class="modal-title">Ketentuan Hukum & Prosedur Takedown</h2>
         <button type="button" id="closeLegalModal" class="modal-close" aria-label="Tutup">×</button>
       </div>
       <div class="modal-body">
         <p>
-          <strong>1. Tanggung Jawab Pengirim</strong><br>
-          Berdasarkan UU ITE, seluruh isi pesan merupakan tanggung jawab mutlak pengirim. Menfesskan bertindak sebagai perantara netral dan tidak memproduksi konten kiriman pengguna.
+          <strong>1. Tanggung Jawab Pengirim (UU ITE)</strong><br>
+          Berdasarkan ketentuan hukum yang berlaku, setiap pesan yang dikirimkan merupakan tanggung jawab mutlak pengirim. Menfesskan hanya bertindak sebagai media penerus dan tidak memproduksi isi pesan.
         </p>
         <p>
-          <strong>2. Larangan Doxxing (UU PDP)</strong><br>
-          Dilarang menyebarkan nomor telepon, alamat, akun pribadi, atau identitas orang lain tanpa izin tertulis (UU Pelindungan Data Pribadi).
+          <strong>2. Larangan Doxxing & Pelindungan Data (UU PDP)</strong><br>
+          Dilarang keras menyebarkan data pribadi, nomor ponsel, alamat rumah, atau identitas privat pihak ketiga tanpa persetujuan tertulis.
         </p>
         <p>
-          <strong>3. Prosedur Takedown Konten</strong><br>
-          Pihak yang merasa dirugikan atas postingan tertentu berhak meminta penghapusan kapan saja melalui DM Instagram resmi kami dengan menyebutkan ID menfess. Moderator memproses penghapusan maksimal 1x24 jam.
+          <strong>3. Prosedur Permintaan Takedown Konten</strong><br>
+          Pihak yang merasa dirugikan atas penayangan menfess berhak mengajukan permohonan takedown kapan saja melalui pesan langsung (DM) ke akun Instagram resmi kami dengan menyertakan kode ID menfess. Moderator akan menghapus postingan maksimal 1x24 jam kerja.
         </p>
       </div>
-      <div style="display: flex; justify-content: flex-end; padding-top: var(--space-xs); border-top: 1px solid var(--color-border);">
-        <button type="button" id="confirmLegalBtn" class="btn-submit" style="width: auto; min-height: 40px; padding: 0 var(--space-lg); font-size: var(--text-sm);">
+      <div style="display: flex; justify-content: flex-end; padding-top: var(--space-xs); border-top: var(--rule-bar) solid var(--color-rule);">
+        <button type="button" id="confirmLegalBtn" class="btn-broadcast" style="width: auto; min-height: 42px; padding: 0 var(--space-lg); font-size: var(--text-sm);">
           Saya Mengerti
         </button>
       </div>
@@ -203,23 +222,40 @@
   </dialog>
 
   <script>
-    const textarea = document.getElementById('content');
     const songInput = document.getElementById('songQuery');
-    const fileInput = document.getElementById('imageAttachments');
-    const previewContainer = document.getElementById('previewContainer');
     const slideBadge = document.getElementById('slideBadge');
-    const charCount = document.getElementById('charCount');
+    const slidesContainer = document.getElementById('slidesContainer');
+    const addSlideBtn = document.getElementById('addSlideBtn');
     const form = document.getElementById('menfessForm');
     const submitBtn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
     const alertBox = document.getElementById('alertBox');
-    const dropzoneBox = document.getElementById('dropzoneBox');
 
     // Live Preview elements
     const liveQuote = document.getElementById('liveQuote');
+    const livePhotoWrap = document.getElementById('livePhotoWrap');
+    const livePhotoImg = document.getElementById('livePhotoImg');
+    const livePhotoPlaceholder = document.getElementById('livePhotoPlaceholder');
     const liveDate = document.getElementById('liveDate');
     const liveMusicBar = document.getElementById('liveMusicBar');
     const liveMusicTitle = document.getElementById('liveMusicTitle');
+    const liveMusicThumb = document.getElementById('liveMusicThumb');
+    const liveMusicIcon = document.getElementById('liveMusicIcon');
+    const selectedSongBadge = document.getElementById('selectedSongBadge');
+    const selectedSongImg = document.getElementById('selectedSongImg');
+    const selectedSongTitle = document.getElementById('selectedSongTitle');
+    const selectedSongArtist = document.getElementById('selectedSongArtist');
+    const clearSongBtn = document.getElementById('clearSongBtn');
+    const carouselSummary = document.getElementById('carouselSummary');
+    const carouselDots = document.getElementById('carouselDots');
+    const prevSlideBtn = document.getElementById('prevSlideBtn');
+    const nextSlideBtn = document.getElementById('nextSlideBtn');
+
+    // Dynamic State
+    let slides = [
+      { id: 'slide_' + Date.now(), type: 'text', content: '', file: null, previewUrl: '' }
+    ];
+    let activePreviewIndex = 0;
 
     // Format current Indonesian date for card
     try {
@@ -231,35 +267,411 @@
       });
     } catch {}
 
-    // Live card update
-    textarea.addEventListener('input', () => {
-      const len = textarea.value.length;
-      charCount.textContent = `${len} / 800`;
-      if (len > 750) {
-        charCount.className = 'char-counter danger';
-      } else if (len > 600) {
-        charCount.className = 'char-counter warning';
-      } else {
-        charCount.className = 'char-counter';
+    function showAlert(msg, isSuccess = true) {
+      alertBox.textContent = msg;
+      alertBox.className = `radio-alert ${isSuccess ? 'radio-alert--success' : 'radio-alert--error'}`;
+      alertBox.removeAttribute('hidden');
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function highlightActiveCard() {
+      const cards = slidesContainer.querySelectorAll('.slide-item-card');
+      cards.forEach((c, idx) => {
+        if (idx === activePreviewIndex) c.classList.add('is-active');
+        else c.classList.remove('is-active');
+      });
+    }
+
+    function updateLivePreview() {
+      if (slides.length === 0) return;
+      if (activePreviewIndex < 0) activePreviewIndex = 0;
+      if (activePreviewIndex >= slides.length) activePreviewIndex = slides.length - 1;
+
+      carouselSummary.textContent = `${activePreviewIndex + 1}/${slides.length}`;
+      prevSlideBtn.disabled = activePreviewIndex === 0;
+      nextSlideBtn.disabled = activePreviewIndex === slides.length - 1;
+
+      carouselDots.innerHTML = '';
+      for (let i = 0; i < slides.length; i++) {
+        const dot = document.createElement('span');
+        dot.className = `carousel-dot ${i === activePreviewIndex ? 'active' : ''}`;
+        dot.style.cursor = 'pointer';
+        dot.setAttribute('aria-label', `Lihat pratinjau slide ${i + 1}`);
+        dot.addEventListener('click', () => {
+          activePreviewIndex = i;
+          highlightActiveCard();
+          updateLivePreview();
+        });
+        carouselDots.appendChild(dot);
       }
 
-      const val = textarea.value.trim();
-      if (val) {
-        liveQuote.textContent = `“${val}”`;
-        // Dynamic font resizing exactly like image.ts
-        if (val.length > 350) {
-          liveQuote.style.fontSize = '14px';
-        } else if (val.length > 200) {
-          liveQuote.style.fontSize = '17px';
-        } else if (val.length < 80) {
-          liveQuote.style.fontSize = '24px';
+      const cur = slides[activePreviewIndex];
+      if (cur.type === 'text') {
+        liveQuote.style.display = 'block';
+        livePhotoWrap.style.display = 'none';
+        const val = (cur.content || '').trim();
+        if (val) {
+          liveQuote.textContent = `“${val}”`;
+          if (val.length > 350) {
+            liveQuote.style.fontSize = '14px';
+          } else if (val.length > 200) {
+            liveQuote.style.fontSize = '17px';
+          } else if (val.length < 80) {
+            liveQuote.style.fontSize = '24px';
+          } else {
+            liveQuote.style.fontSize = '20px';
+          }
         } else {
+          liveQuote.textContent = '“Tulis pesanmu di sebelah kiri untuk melihat pratinjau kartu Instagram…”';
           liveQuote.style.fontSize = '20px';
         }
       } else {
-        liveQuote.textContent = '“Tulis pesanmu di formulir sebelah kiri untuk melihat pratinjau kartu feed…”';
-        liveQuote.style.fontSize = '20px';
+        liveQuote.style.display = 'none';
+        livePhotoWrap.style.display = 'flex';
+        if (cur.previewUrl) {
+          livePhotoImg.src = cur.previewUrl;
+          livePhotoImg.style.display = 'block';
+          livePhotoPlaceholder.style.display = 'none';
+        } else {
+          livePhotoImg.style.display = 'none';
+          livePhotoPlaceholder.textContent = `Pilih foto pada Slide ${activePreviewIndex + 1} untuk melihat pratinjau`;
+          livePhotoPlaceholder.style.display = 'block';
+        }
       }
+    }
+
+    function handleFileSelect(file, slide, index) {
+      if (file.size > 2 * 1024 * 1024) {
+        showAlert(`File "${file.name}" melebihi batas 2MB. Silakan pilih foto lain.`, false);
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        showAlert(`Format file "${file.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`, false);
+        return;
+      }
+      slide.file = file;
+      slide.previewUrl = URL.createObjectURL(file);
+      activePreviewIndex = index;
+      renderSlidesList();
+      updateLivePreview();
+    }
+
+    function renderSlidesList() {
+      slidesContainer.innerHTML = '';
+      slideBadge.textContent = `${slides.length}/5`;
+      addSlideBtn.style.display = slides.length >= 5 ? 'none' : 'flex';
+
+      slides.forEach((slide, index) => {
+        const card = document.createElement('div');
+        card.className = `slide-item-card ${index === activePreviewIndex ? 'is-active' : ''}`;
+        card.dataset.index = index;
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'slide-item-header';
+
+        const headerLeft = document.createElement('div');
+        headerLeft.className = 'slide-header-left';
+
+        const badge = document.createElement('span');
+        badge.className = 'slide-badge';
+        badge.textContent = `Slide ${index + 1}`;
+
+        const switcher = document.createElement('div');
+        switcher.className = 'slide-type-switcher';
+        switcher.setAttribute('role', 'radiogroup');
+        switcher.setAttribute('aria-label', `Tipe Slide ${index + 1}`);
+
+        const textBtn = document.createElement('button');
+        textBtn.type = 'button';
+        textBtn.className = `slide-type-btn ${slide.type === 'text' ? 'active' : ''}`;
+        textBtn.textContent = 'Teks';
+        textBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (slide.type !== 'text') {
+            slide.type = 'text';
+            activePreviewIndex = index;
+            renderSlidesList();
+            updateLivePreview();
+          }
+        });
+
+        const photoBtn = document.createElement('button');
+        photoBtn.type = 'button';
+        photoBtn.className = `slide-type-btn ${slide.type === 'image' ? 'active' : ''}`;
+        photoBtn.textContent = 'Foto';
+        photoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (slide.type !== 'image') {
+            slide.type = 'image';
+            activePreviewIndex = index;
+            renderSlidesList();
+            updateLivePreview();
+          }
+        });
+
+        switcher.appendChild(textBtn);
+        switcher.appendChild(photoBtn);
+        headerLeft.appendChild(badge);
+        headerLeft.appendChild(switcher);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'slide-delete-btn';
+        delBtn.textContent = '×';
+        delBtn.setAttribute('aria-label', `Hapus Slide ${index + 1}`);
+        delBtn.title = `Hapus Slide ${index + 1}`;
+        if (slides.length <= 1) {
+          delBtn.disabled = true;
+        } else {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            slides.splice(index, 1);
+            if (activePreviewIndex >= slides.length) {
+              activePreviewIndex = slides.length - 1;
+            }
+            renderSlidesList();
+            updateLivePreview();
+          });
+        }
+
+        header.appendChild(headerLeft);
+        header.appendChild(delBtn);
+        card.appendChild(header);
+
+        // Body Content
+        if (slide.type === 'text') {
+          const textWrap = document.createElement('div');
+          textWrap.className = 'field-group';
+
+          const fieldHead = document.createElement('div');
+          fieldHead.className = 'field-header';
+
+          const label = document.createElement('label');
+          label.className = 'field-label';
+          label.textContent = `Pesan Slide ${index + 1}`;
+
+          const counter = document.createElement('span');
+          counter.className = 'char-counter';
+          const len = (slide.content || '').length;
+          counter.textContent = `${len}/800`;
+          if (len > 750) counter.className = 'char-counter danger';
+          else if (len > 600) counter.className = 'char-counter warning';
+
+          fieldHead.appendChild(label);
+          fieldHead.appendChild(counter);
+
+          const ta = document.createElement('textarea');
+          ta.className = 'radio-textarea';
+          ta.rows = 4;
+          ta.maxLength = 800;
+          ta.placeholder = `Tulis curhatan atau pesan slide ${index + 1} di sini…`;
+          ta.value = slide.content || '';
+          ta.addEventListener('input', () => {
+            slide.content = ta.value;
+            const curLen = ta.value.length;
+            counter.textContent = `${curLen}/800`;
+            if (curLen > 750) counter.className = 'char-counter danger';
+            else if (curLen > 600) counter.className = 'char-counter warning';
+            else counter.className = 'char-counter';
+
+            if (activePreviewIndex === index) {
+              updateLivePreview();
+            }
+          });
+          ta.addEventListener('focus', () => {
+            if (activePreviewIndex !== index) {
+              activePreviewIndex = index;
+              highlightActiveCard();
+              updateLivePreview();
+            }
+          });
+
+          textWrap.appendChild(fieldHead);
+          textWrap.appendChild(ta);
+          card.appendChild(textWrap);
+        } else {
+          // Photo Content
+          const photoWrap = document.createElement('div');
+          photoWrap.className = 'field-group';
+
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'file';
+          hiddenInput.accept = 'image/jpeg,image/png,image/webp';
+          hiddenInput.className = 'file-input-hidden';
+          hiddenInput.style.display = 'none';
+          hiddenInput.addEventListener('change', () => {
+            if (hiddenInput.files && hiddenInput.files[0]) {
+              handleFileSelect(hiddenInput.files[0], slide, index);
+            }
+          });
+
+          if (slide.file && slide.previewUrl) {
+            const thumbBox = document.createElement('div');
+            thumbBox.className = 'slide-preview-thumb-box';
+
+            const img = document.createElement('img');
+            img.className = 'slide-preview-thumb';
+            img.src = slide.previewUrl;
+            img.alt = `Pratinjau foto slide ${index + 1}`;
+
+            const fileMeta = document.createElement('div');
+            fileMeta.style.flex = '1';
+            fileMeta.style.overflow = 'hidden';
+
+            const fileName = document.createElement('div');
+            fileName.style.fontSize = 'var(--text-xs)';
+            fileName.style.fontWeight = '700';
+            fileName.style.color = 'var(--color-ink)';
+            fileName.style.whiteSpace = 'nowrap';
+            fileName.style.overflow = 'hidden';
+            fileName.style.textOverflow = 'ellipsis';
+            fileName.textContent = slide.file.name;
+
+            const fileSize = document.createElement('div');
+            fileSize.style.fontSize = 'var(--text-xs)';
+            fileSize.style.color = 'var(--color-muted)';
+            fileSize.textContent = `${(slide.file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+            fileMeta.appendChild(fileName);
+            fileMeta.appendChild(fileSize);
+
+            const repBtn = document.createElement('button');
+            repBtn.type = 'button';
+            repBtn.className = 'slide-photo-replace-btn';
+            repBtn.textContent = 'Ganti Foto';
+            repBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              hiddenInput.click();
+            });
+
+            thumbBox.appendChild(img);
+            thumbBox.appendChild(fileMeta);
+            thumbBox.appendChild(repBtn);
+            photoWrap.appendChild(thumbBox);
+          } else {
+            const dzBox = document.createElement('div');
+            dzBox.className = 'dropzone-box';
+            dzBox.innerHTML = `
+              <div class="dropzone-content">
+                <svg class="dropzone-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="dropzone-text">+ Pilih Foto Slide ${index + 1}</span>
+                <span class="dropzone-hint">JPG, PNG, WebP (Maks 2MB)</span>
+              </div>
+            `;
+
+            dzBox.addEventListener('dragover', (e) => { e.preventDefault(); dzBox.classList.add('dragover'); });
+            dzBox.addEventListener('dragleave', () => dzBox.classList.remove('dragover'));
+            dzBox.addEventListener('drop', (e) => {
+              e.preventDefault();
+              dzBox.classList.remove('dragover');
+              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileSelect(e.dataTransfer.files[0], slide, index);
+              }
+            });
+            dzBox.addEventListener('click', () => hiddenInput.click());
+
+            photoWrap.appendChild(dzBox);
+          }
+
+          photoWrap.appendChild(hiddenInput);
+          card.appendChild(photoWrap);
+        }
+
+        card.addEventListener('click', () => {
+          if (activePreviewIndex !== index) {
+            activePreviewIndex = index;
+            highlightActiveCard();
+            updateLivePreview();
+          }
+        });
+
+        slidesContainer.appendChild(card);
+      });
+    }
+
+    addSlideBtn.addEventListener('click', () => {
+      if (slides.length >= 5) {
+        showAlert('Maksimal 5 slide per postingan.', false);
+        return;
+      }
+      slides.push({
+        id: 'slide_' + Date.now(),
+        type: 'text',
+        content: '',
+        file: null,
+        previewUrl: ''
+      });
+      activePreviewIndex = slides.length - 1;
+      renderSlidesList();
+      updateLivePreview();
+    });
+
+    prevSlideBtn.addEventListener('click', () => {
+      if (activePreviewIndex > 0) {
+        activePreviewIndex--;
+        highlightActiveCard();
+        updateLivePreview();
+      }
+    });
+
+    nextSlideBtn.addEventListener('click', () => {
+      if (activePreviewIndex < slides.length - 1) {
+        activePreviewIndex++;
+        highlightActiveCard();
+        updateLivePreview();
+      }
+    });
+
+    // Song Recommendations & Autocomplete
+    const songAutocompleteList = document.getElementById('songAutocompleteList');
+    let debounceTimer = null;
+    let selectedSongIdx = -1;
+    let currentSongItems = [];
+
+    function selectSong(track) {
+      const fullQuery = typeof track === 'string' ? track : track.fullQuery;
+      songInput.value = fullQuery;
+      songInput.dataset.selectedSong = fullQuery;
+      liveMusicBar.style.display = 'flex';
+      liveMusicTitle.textContent = fullQuery;
+
+      const artwork = typeof track === 'object' && track.artwork ? track.artwork : '';
+      const title = typeof track === 'object' && track.title ? track.title : fullQuery;
+      const artist = typeof track === 'object' && track.artist ? track.artist : 'Instagram Music';
+
+      if (artwork) {
+        liveMusicThumb.src = artwork;
+        liveMusicThumb.style.display = 'block';
+        liveMusicIcon.style.display = 'none';
+
+        selectedSongImg.src = artwork;
+        selectedSongTitle.textContent = title;
+        selectedSongArtist.textContent = artist;
+        selectedSongBadge.style.display = 'flex';
+      } else {
+        liveMusicThumb.style.display = 'none';
+        liveMusicIcon.style.display = 'block';
+        selectedSongBadge.style.display = 'none';
+      }
+
+      closeSongAutocomplete();
+    }
+
+    function closeSongAutocomplete() {
+      songAutocompleteList.innerHTML = '';
+      songAutocompleteList.setAttribute('hidden', '');
+      selectedSongIdx = -1;
+      currentSongItems = [];
+    }
+
+    clearSongBtn.addEventListener('click', () => {
+      songInput.value = '';
+      delete songInput.dataset.selectedSong;
+      selectedSongBadge.style.display = 'none';
+      liveMusicBar.style.display = 'none';
+      liveMusicThumb.style.display = 'none';
+      liveMusicIcon.style.display = 'block';
     });
 
     songInput.addEventListener('input', () => {
@@ -267,8 +679,122 @@
       if (val) {
         liveMusicBar.style.display = 'flex';
         liveMusicTitle.textContent = val;
+        if (selectedSongBadge.style.display !== 'none' && val !== songInput.dataset.selectedSong) {
+          selectedSongBadge.style.display = 'none';
+          liveMusicThumb.style.display = 'none';
+          liveMusicIcon.style.display = 'block';
+        }
       } else {
         liveMusicBar.style.display = 'none';
+        selectedSongBadge.style.display = 'none';
+        liveMusicThumb.style.display = 'none';
+        liveMusicIcon.style.display = 'block';
+      }
+
+      clearTimeout(debounceTimer);
+      if (val.length < 2) {
+        closeSongAutocomplete();
+        return;
+      }
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          songAutocompleteList.innerHTML = '<div class="song-loading-hint">Mencari lagu…</div>';
+          songAutocompleteList.removeAttribute('hidden');
+
+          const res = await fetch(`/api/music/search?q=${encodeURIComponent(val)}`);
+          if (!res.ok) {
+            closeSongAutocomplete();
+            return;
+          }
+          const json = await res.json();
+          currentSongItems = json.data || [];
+
+          if (currentSongItems.length === 0) {
+            songAutocompleteList.innerHTML = '<div class="song-loading-hint">Lagu tidak ditemukan</div>';
+            return;
+          }
+
+          songAutocompleteList.innerHTML = '';
+          selectedSongIdx = -1;
+
+          currentSongItems.forEach((track, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'song-item';
+            btn.dataset.index = idx;
+
+            const img = document.createElement('img');
+            img.className = 'song-item-artwork';
+            img.src = track.artwork || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E";
+            img.alt = track.title;
+            img.loading = 'lazy';
+
+            const info = document.createElement('div');
+            info.className = 'song-item-info';
+
+            const title = document.createElement('span');
+            title.className = 'song-item-title';
+            title.textContent = track.title;
+
+            const artist = document.createElement('span');
+            artist.className = 'song-item-artist';
+            artist.textContent = track.artist;
+
+            info.appendChild(title);
+            info.appendChild(artist);
+
+            btn.appendChild(img);
+            btn.appendChild(info);
+
+            btn.addEventListener('click', () => {
+              selectSong(track);
+            });
+
+            songAutocompleteList.appendChild(btn);
+          });
+        } catch {
+          closeSongAutocomplete();
+        }
+      }, 250);
+    });
+
+    songInput.addEventListener('keydown', (e) => {
+      const items = songAutocompleteList.querySelectorAll('.song-item');
+      if (!items.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedSongIdx = (selectedSongIdx + 1) % items.length;
+        updateSelectedSongItem(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedSongIdx = (selectedSongIdx - 1 + items.length) % items.length;
+        updateSelectedSongItem(items);
+      } else if (e.key === 'Enter') {
+        if (selectedSongIdx >= 0 && selectedSongIdx < currentSongItems.length) {
+          e.preventDefault();
+          selectSong(currentSongItems[selectedSongIdx]);
+        }
+      } else if (e.key === 'Escape') {
+        closeSongAutocomplete();
+      }
+    });
+
+    function updateSelectedSongItem(items) {
+      items.forEach((item, idx) => {
+        if (idx === selectedSongIdx) {
+          item.classList.add('is-selected');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('is-selected');
+        }
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!songInput.contains(e.target) && !songAutocompleteList.contains(e.target)) {
+        closeSongAutocomplete();
       }
     });
 
@@ -286,113 +812,65 @@
       if (e.target === legalModal) closeModal();
     });
 
-    function showAlert(msg, isSuccess = true) {
-      alertBox.textContent = msg;
-      alertBox.className = `ocean-alert ${isSuccess ? 'ocean-alert--success' : 'ocean-alert--error'}`;
-      alertBox.removeAttribute('hidden');
-      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Drag and drop events for dropzone
-    ['dragenter', 'dragover'].forEach((eventName) => {
-      dropzoneBox.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        dropzoneBox.classList.add('dragover');
-      });
-    });
-    ['dragleave', 'drop'].forEach((eventName) => {
-      dropzoneBox.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        dropzoneBox.classList.remove('dragover');
-      });
-    });
-
-    // File Attachments Management (Max 4, Max 2MB each, Max 3.8MB total)
-    let selectedFiles = [];
-    const MAX_FILES = 4;
-    const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
-    const MAX_TOTAL_BYTES = 3.8 * 1024 * 1024; // 3.8MB
-
-    function updateBadgeAndPreviews() {
-      const totalSlides = 1 + selectedFiles.length;
-      slideBadge.textContent = totalSlides === 1 ? '1 SLIDE (TEKS)' : `${totalSlides} SLIDES (1 TEKS + ${selectedFiles.length} FOTO)`;
-
-      previewContainer.innerHTML = '';
-      if (selectedFiles.length === 0) {
-        previewContainer.setAttribute('hidden', '');
-        return;
-      }
-
-      previewContainer.removeAttribute('hidden');
-      selectedFiles.forEach((file, idx) => {
-        const item = document.createElement('div');
-        item.className = 'thumbnail-item';
-
-        const img = document.createElement('img');
-        img.className = 'thumbnail-img';
-        img.alt = `Slide ${idx + 2}`;
-        img.src = URL.createObjectURL(file);
-
-        const rmBtn = document.createElement('button');
-        rmBtn.type = 'button';
-        rmBtn.className = 'thumbnail-remove';
-        rmBtn.setAttribute('aria-label', `Hapus foto ${idx + 1}`);
-        rmBtn.textContent = '×';
-        rmBtn.addEventListener('click', () => {
-          selectedFiles.splice(idx, 1);
-          updateBadgeAndPreviews();
-        });
-
-        item.appendChild(img);
-        item.appendChild(rmBtn);
-        previewContainer.appendChild(item);
-      });
-    }
-
-    fileInput.addEventListener('change', () => {
-      const files = Array.from(fileInput.files);
-      for (const f of files) {
-        if (selectedFiles.length >= MAX_FILES) {
-          showAlert(`Maksimal ${MAX_FILES} foto lampiran.`, false);
-          break;
-        }
-        if (f.size > MAX_SIZE_BYTES) {
-          showAlert(`File "${f.name}" melebihi batas 2MB. Silakan pilih foto lain.`, false);
-          continue;
-        }
-        const currentTotal = selectedFiles.reduce((acc, curr) => acc + curr.size, 0);
-        if (currentTotal + f.size > MAX_TOTAL_BYTES) {
-          showAlert(`Total ukuran semua foto melebihi batas 3.8MB. Kurangi foto atau kompres terlebih dahulu.`, false);
-          break;
-        }
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
-          showAlert(`Format file "${f.name}" tidak didukung. Gunakan JPG, PNG, atau WebP.`, false);
-          continue;
-        }
-        selectedFiles.push(f);
-      }
-      fileInput.value = '';
-      updateBadgeAndPreviews();
-    });
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const content = textarea.value.trim();
-      if (!content) return;
+
+      for (let i = 0; i < slides.length; i++) {
+        const s = slides[i];
+        if (s.type === 'text') {
+          const val = (s.content || '').trim();
+          if (!val) {
+            showAlert(`Slide ${i + 1} (teks) belum diisi. Silakan tulis pesan atau hapus slide tersebut.`, false);
+            activePreviewIndex = i;
+            highlightActiveCard();
+            updateLivePreview();
+            return;
+          }
+          if (val.length < 5) {
+            showAlert(`Pesan pada Slide ${i + 1} terlalu pendek (minimal 5 karakter).`, false);
+            activePreviewIndex = i;
+            highlightActiveCard();
+            updateLivePreview();
+            return;
+          }
+        } else if (s.type === 'image') {
+          if (!s.file) {
+            showAlert(`Slide ${i + 1} (foto) belum memilih foto lampiran. Silakan unggah foto atau ubah ke teks.`, false);
+            activePreviewIndex = i;
+            highlightActiveCard();
+            updateLivePreview();
+            return;
+          }
+        }
+      }
 
       submitBtn.disabled = true;
-      btnText.textContent = 'Mengunggah ke Lautan…';
+      btnText.textContent = 'Mengirim menfess…';
       alertBox.setAttribute('hidden', '');
 
       try {
         const formData = new FormData();
-        formData.append('content', content);
+        const slidesMeta = [];
+        let fileCounter = 0;
+
+        slides.forEach((s) => {
+          if (s.type === 'text') {
+            slidesMeta.push({ type: 'text', content: s.content.trim() });
+          } else {
+            slidesMeta.push({ type: 'image', fileIndex: fileCounter });
+            formData.append('images', s.file);
+            fileCounter++;
+          }
+        });
+
+        formData.append('slides_meta', JSON.stringify(slidesMeta));
+
+        const firstText = slides.find((s) => s.type === 'text' && s.content.trim());
+        formData.append('content', firstText ? firstText.content.trim() : '[Foto Menfess]');
+
         if (songInput.value.trim()) {
           formData.append('song_query', songInput.value.trim());
         }
-        selectedFiles.forEach((f) => {
-          formData.append('images', f);
-        });
 
         const res = await fetch('/api/menfess', {
           method: 'POST',
@@ -411,19 +889,24 @@
         if (res.ok && data.success) {
           if (data.status === 'queued') {
             const songNote = data.song_query ? ` dengan lagu "${data.song_query}"` : '';
-            showAlert(`Menfess kamu (${data.slidesCount || 1} slide)${songNote} berhasil masuk antrean postingan!`, true);
+            showAlert(`Menfess kamu (${data.slidesCount || slides.length} slide)${songNote} berhasil masuk antrean posting Instagram!`, true);
           } else if (data.status === 'posted') {
             showAlert('Pesan kamu berhasil terbit ke feed Instagram!', true);
           } else if (data.status === 'flagged') {
-            showAlert('Pesan menunggu verifikasi moderator: ' + (data.flagReason || 'Pemeriksaan keamanan'), true);
+            showAlert('Pesan menunggu verifikasi meja kurasi: ' + (data.flagReason || 'Pemeriksaan keamanan'), true);
           }
-          textarea.value = '';
+          slides = [
+            { id: 'slide_' + Date.now(), type: 'text', content: '', file: null, previewUrl: '' }
+          ];
+          activePreviewIndex = 0;
           songInput.value = '';
-          selectedFiles = [];
-          charCount.textContent = '0 / 800';
-          liveQuote.textContent = '“Tulis pesanmu di formulir sebelah kiri untuk melihat pratinjau kartu feed…”';
+          delete songInput.dataset.selectedSong;
+          selectedSongBadge.style.display = 'none';
+          liveMusicThumb.style.display = 'none';
+          liveMusicIcon.style.display = 'block';
           liveMusicBar.style.display = 'none';
-          updateBadgeAndPreviews();
+          renderSlidesList();
+          updateLivePreview();
         } else {
           showAlert(data?.error || `Error ${res.status}: Pesan gagal dikirim.`, false);
         }
@@ -436,6 +919,10 @@
         btnText.textContent = 'Kirim Menfess';
       }
     });
+
+    // Initial render
+    renderSlidesList();
+    updateLivePreview();
   </script>
 </body>
 </html>

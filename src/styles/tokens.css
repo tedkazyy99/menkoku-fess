@@ -1,64 +1,139 @@
 :root {
   color-scheme: dark;
 
-  /* Spacing */
+  /* Spacing Scale (4px base) */
   --space-3xs: 2px;
   --space-2xs: 4px;
   --space-xs: 8px;
   --space-sm: 12px;
   --space-md: 16px;
   --space-lg: 24px;
-  --space-xl: 36px;
-  --space-2xl: 56px;
-  --space-3xl: 80px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 144px;
 
   /* Typography Scale */
-  --text-xs: 0.75rem;
+  --text-xs: 0.8125rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
-  --text-lg: 1.1875rem;
-  --text-xl: 1.4375rem;
-  --text-2xl: 1.875rem;
-  --text-3xl: 2.375rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --text-display-s: clamp(2rem, 3.5vw + 0.5rem, 3.25rem);
+  --text-display: clamp(2.25rem, 4vw + 0.5rem, 3.75rem);
+  --text-section: clamp(1.75rem, 2.5vw + 0.5rem, 2.75rem);
+  --text-title: clamp(1.25rem, 0.75vw + 0.875rem, 1.625rem);
+  --text-lead: clamp(1.05rem, 0.35vw + 0.875rem, 1.25rem);
 
   /* Transitions & Curves */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms;
-  --dur-short: 200ms;
-  --dur-med: 320ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
 
-  /* Deep Nocturnal Ocean Palette */
-  --color-abyss: #070d18;
-  --color-surface: #0e1726;
-  --color-surface-card: #131f33;
-  --color-surface-hover: #182740;
+  /* Layout */
+  --container: 1440px;
+  --gutter: 48px;
+  --gap-columns: 32px;
+  --section-gap-s: 80px;
+  --section-gap: 120px;
+  --section-gap-l: 160px;
 
-  --color-seafoam: #38bdf8;
-  --color-seafoam-glow: rgba(56, 189, 248, 0.22);
-  --color-emerald-tide: #2dd4bf;
+  /* Z-Index */
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-sticky-nav: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
 
-  --color-ink: #f8fafc;
-  --color-ink-secondary: #cbd5e1;
-  --color-muted: #8899ac;
-  --color-border: #1e293b;
-  --color-border-hover: #334155;
+  /* Arcade Core Palette (Dark Aubergine / Pixel / Chromatic Ember & Acid) */
+  --color-paper: oklch(14% 0.04 312);
+  --color-paper-2: oklch(18.5% 0.042 312);
+  --color-paper-3: oklch(23% 0.045 312);
+  --color-paper-hover: oklch(28% 0.05 312);
 
-  --color-error: #f43f5e;
-  --color-error-bg: rgba(244, 63, 94, 0.12);
-  --color-success: #10b981;
-  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-ink: oklch(95% 0.014 315);
+  --color-ink-2: oklch(87% 0.018 315);
+  --color-muted: oklch(71% 0.024 315);
+
+  --color-rule: oklch(34% 0.05 312);
+  --color-rule-subtle: oklch(28% 0.04 312);
+  --color-rule-strong: oklch(50% 0.07 312);
+
+  --color-accent: oklch(66% 0.215 40);
+  --color-accent-2: oklch(88% 0.195 115);
+  --color-accent-ink: oklch(14% 0.04 312);
+
+  --color-focus: oklch(88% 0.195 115);
+  --color-focus-ring: oklch(88% 0.195 115 / 0.4);
+
+  --color-crt-r: oklch(63% 0.24 25);
+  --color-crt-g: oklch(80% 0.25 140);
+  --color-crt-b: oklch(60% 0.24 265);
+  --color-crt-c: oklch(78% 0.14 200);
+  --color-shade: oklch(8% 0.02 315);
+
+  --color-selection-bg: oklch(66% 0.215 40 / 0.35);
+  --color-placeholder: oklch(55% 0.03 315);
+
+  /* Status Tokens */
+  --color-error: oklch(72% 0.15 27);
+  --color-error-bg: oklch(72% 0.15 27 / 0.14);
+  --color-error-border: oklch(72% 0.15 27 / 0.4);
+  --color-error-text: oklch(82% 0.16 27);
+
+  --color-success: oklch(88% 0.195 115);
+  --color-success-bg: oklch(88% 0.195 115 / 0.14);
+  --color-success-border: oklch(88% 0.195 115 / 0.4);
+  --color-success-text: oklch(90% 0.195 115);
+
+  --color-warning: oklch(66% 0.215 40);
+  --color-warning-bg: oklch(66% 0.215 40 / 0.14);
+  --color-warning-text: oklch(78% 0.2 40);
+
+  /* Instagram Live Feed Card Tokens (Arcade Theme) */
+  --color-ig-bg: oklch(14% 0.04 312);
+  --color-ig-header-border: oklch(28% 0.05 312);
+  --color-ig-avatar-bg: oklch(66% 0.215 40);
+  --color-ig-avatar-text: oklch(14% 0.04 312);
+  --color-ig-name: oklch(96% 0.015 315);
+  --color-ig-id: oklch(88% 0.195 115);
+  --color-ig-date: oklch(71% 0.024 315);
+  --color-ig-quote: oklch(96% 0.015 315);
+  --color-ig-music-bg: oklch(22% 0.045 312);
+  --color-ig-music-border: oklch(66% 0.215 40 / 0.4);
+  --color-ig-music-text: oklch(88% 0.195 115);
+  --color-ig-handle: oklch(66% 0.215 40);
+  --color-ig-footer-hint: oklch(71% 0.024 315);
+
+  /* Modal Backdrop */
+  --color-modal-backdrop: oklch(8% 0.02 315 / 0.88);
 
   /* Typography */
-  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "Bungee", "Impact", sans-serif;
+  --font-body: "Chivo", ui-sans-serif, sans-serif;
+  --font-outlier: "Silkscreen", monospace;
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-outlier);
 
-  /* Borders & Shadows */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-pill: 9999px;
+  /* Radii & Rules */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-well: 4px;
+  --radius-card: 4px;
+  --radius-pill: 4px;
+  --rule-hair: 1px;
+  --rule-bar: 2px;
 
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 8px 32px rgba(56, 189, 248, 0.12), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-card: 4px 4px 0 var(--color-accent-2);
+  --tracking-display: 0;
+  --display-weight: 400;
 }

@@ -14,7 +14,6 @@ def get_client() -> Client:
     
     cl = Client()
     cl.load_settings(SESSION_FILE)
-    cl.login_by_sessionid(cl.sessionid)
     return cl
 
 def download_images(image_sources: list) -> list:

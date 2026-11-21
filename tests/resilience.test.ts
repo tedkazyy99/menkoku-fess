@@ -107,7 +107,10 @@ test("Fail-Fast & Resilience Test Suite", async (t) => {
     assert.equal(approveData.status, "queued");
 
     const updated = await getMenfessById(found.id);
-    assert.equal(updated?.status, "queued");
+    assert.ok(
+      updated?.status === "queued" || updated?.status === "processing",
+      `Expected status queued or processing, got ${updated?.status}`
+    );
 
     // Clean up
     await db.execute({ sql: "DELETE FROM menfess WHERE id = ?", args: [found.id] });

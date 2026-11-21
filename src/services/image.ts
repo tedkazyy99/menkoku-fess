@@ -5,9 +5,17 @@ export interface RenderMenfessOptions {
   handle?: string;
 }
 
+export interface RenderMenfessPhotoOptions {
+  photoBuffer: Buffer;
+  photoMime?: string;
+  id: string;
+  date?: string;
+  handle?: string;
+}
+
 export async function generateMenfessImage(options: RenderMenfessOptions): Promise<Buffer> {
   const { ImageResponse } = await import("@vercel/og");
-  const { content, id, handle = "@yourmenfess" } = options;
+  const { content, id, handle = process.env.IG_HANDLE || "@fesstembayo" } = options;
   const dateStr = options.date || new Date().toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
@@ -33,9 +41,9 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
         flexDirection: "column",
         width: "100%",
         height: "100%",
-        backgroundColor: "#09090b",
-        backgroundImage: "radial-gradient(circle at 50% 0%, #1e1b4b 0%, #09090b 70%)",
-        color: "#f4f4f5",
+        backgroundColor: "#0d0914",
+        backgroundImage: "radial-gradient(circle at 50% 0%, #261633 0%, #0d0914 75%)",
+        color: "#f5f0fa",
         padding: "80px",
         justifyContent: "space-between",
         fontFamily: "sans-serif",
@@ -49,7 +57,7 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              borderBottom: "1px solid #27272a",
+              borderBottom: "2px solid #2f2042",
               paddingBottom: "32px",
             },
             children: [
@@ -66,18 +74,18 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                       type: "div",
                       props: {
                         style: {
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "24px",
-                          backgroundColor: "#6366f1",
+                          width: "52px",
+                          height: "52px",
+                          borderRadius: "8px",
+                          backgroundColor: "#f97316",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontWeight: "bold",
-                          fontSize: "24px",
-                          color: "#ffffff",
+                          fontWeight: "900",
+                          fontSize: "28px",
+                          color: "#160a22",
                         },
-                        children: "M",
+                        children: "S",
                       },
                     },
                     {
@@ -93,11 +101,11 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                             props: {
                               style: {
                                 fontSize: "28px",
-                                fontWeight: "700",
-                                color: "#ffffff",
+                                fontWeight: "800",
+                                color: "#f5f0fa",
                                 letterSpacing: "-0.5px",
                               },
-                              children: "Menfesskan",
+                              children: "Stembayo Menfess",
                             },
                           },
                           {
@@ -105,7 +113,9 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                             props: {
                               style: {
                                 fontSize: "18px",
-                                color: "#a1a1aa",
+                                color: "#bef264",
+                                fontFamily: "monospace",
+                                fontWeight: "700",
                               },
                               children: `#${id.slice(0, 8)}`,
                             },
@@ -121,7 +131,7 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                 props: {
                   style: {
                     fontSize: "20px",
-                    color: "#71717a",
+                    color: "#9d8fa8",
                     fontWeight: "500",
                   },
                   children: dateStr,
@@ -148,8 +158,8 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                 props: {
                   style: {
                     fontSize: `${fontSize}px`,
-                    lineHeight: "1.5",
-                    color: "#fafafa",
+                    lineHeight: "1.55",
+                    color: "#f5f0fa",
                     fontWeight: "400",
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
@@ -169,7 +179,7 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              borderTop: "1px solid #27272a",
+              borderTop: "2px solid #2f2042",
               paddingTop: "32px",
             },
             children: [
@@ -187,8 +197,8 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                       props: {
                         style: {
                           fontSize: "22px",
-                          fontWeight: "600",
-                          color: "#818cf8",
+                          fontWeight: "700",
+                          color: "#f97316",
                         },
                         children: handle,
                       },
@@ -201,9 +211,221 @@ export async function generateMenfessImage(options: RenderMenfessOptions): Promi
                 props: {
                   style: {
                     fontSize: "18px",
-                    color: "#71717a",
+                    color: "#9d8fa8",
                   },
-                  children: "Kirim pesan anonim via link di bio",
+                  children: "Kirim pesan via link di bio",
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  const imageResponse = new ImageResponse(element, {
+    width: 1080,
+    height: 1080,
+  });
+
+  const arrayBuffer = await imageResponse.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+export async function generateMenfessPhotoImage(options: RenderMenfessPhotoOptions): Promise<Buffer> {
+  const { ImageResponse } = await import("@vercel/og");
+  const { photoBuffer, photoMime = "image/jpeg", id, handle = process.env.IG_HANDLE || "@fesstembayo" } = options;
+  const dateStr = options.date || new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  const base64Data = photoBuffer.toString("base64");
+  const imgSrc = `data:${photoMime};base64,${base64Data}`;
+
+  const element: any = {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#0d0914",
+        backgroundImage: "radial-gradient(circle at 50% 0%, #261633 0%, #0d0914 75%)",
+        color: "#f5f0fa",
+        padding: "60px 80px",
+        justifyContent: "space-between",
+        fontFamily: "sans-serif",
+      },
+      children: [
+        // Header
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "2px solid #2f2042",
+              paddingBottom: "24px",
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                  },
+                  children: [
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          width: "52px",
+                          height: "52px",
+                          borderRadius: "8px",
+                          backgroundColor: "#f97316",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "900",
+                          fontSize: "28px",
+                          color: "#160a22",
+                        },
+                        children: "S",
+                      },
+                    },
+                    {
+                      type: "div",
+                      props: {
+                        style: {
+                          display: "flex",
+                          flexDirection: "column",
+                        },
+                        children: [
+                          {
+                            type: "span",
+                            props: {
+                              style: {
+                                fontSize: "28px",
+                                fontWeight: "800",
+                                color: "#f5f0fa",
+                                letterSpacing: "-0.5px",
+                              },
+                              children: "Stembayo Menfess",
+                            },
+                          },
+                          {
+                            type: "span",
+                            props: {
+                              style: {
+                                fontSize: "18px",
+                                color: "#bef264",
+                                fontFamily: "monospace",
+                                fontWeight: "700",
+                              },
+                              children: `#${id.slice(0, 8)}`,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: "20px",
+                    color: "#9d8fa8",
+                    fontWeight: "500",
+                  },
+                  children: dateStr,
+                },
+              },
+            ],
+          },
+        },
+
+        // Framed Photo Body
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              flex: 1,
+              padding: "24px 0",
+              overflow: "hidden",
+            },
+            children: [
+              {
+                type: "img",
+                props: {
+                  src: imgSrc,
+                  style: {
+                    width: "100%",
+                    height: "720px",
+                    objectFit: "cover",
+                    borderRadius: "16px",
+                    border: "3px solid #36224c",
+                  },
+                },
+              },
+            ],
+          },
+        },
+
+        // Footer
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderTop: "2px solid #2f2042",
+              paddingTop: "24px",
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  },
+                  children: [
+                    {
+                      type: "span",
+                      props: {
+                        style: {
+                          fontSize: "22px",
+                          fontWeight: "700",
+                          color: "#f97316",
+                        },
+                        children: handle,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: "18px",
+                    color: "#9d8fa8",
+                  },
+                  children: "Kirim pesan via link di bio",
                 },
               },
             ],
